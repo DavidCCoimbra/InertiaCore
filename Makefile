@@ -5,6 +5,7 @@ COVERAGE_DIR := coverage
 
 restore:
 	dotnet restore $(SOLUTION)
+	dotnet tool restore
 
 build: restore
 	dotnet build $(SOLUTION) --no-restore
@@ -15,11 +16,11 @@ test: build
 coverage: build
 	rm -rf $(COVERAGE_DIR)
 	dotnet test $(SOLUTION) --no-build /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../../$(COVERAGE_DIR)/
+	dotnet reportgenerator -reports:$(COVERAGE_DIR)/coverage.cobertura.xml -targetdir:$(COVERAGE_DIR) -reporttypes:TextSummary
+	@cat $(COVERAGE_DIR)/Summary.txt
 
 coverage-report: coverage
-	@command -v reportgenerator >/dev/null 2>&1 || { echo "Install reportgenerator: dotnet tool install -g dotnet-reportgenerator-globaltool"; exit 1; }
-	reportgenerator -reports:$(COVERAGE_DIR)/coverage.cobertura.xml -targetdir:$(COVERAGE_DIR)/html -reporttypes:Html
-	@echo ""
+	dotnet reportgenerator -reports:$(COVERAGE_DIR)/coverage.cobertura.xml -targetdir:$(COVERAGE_DIR)/html -reporttypes:Html
 	@echo "Report: $(COVERAGE_DIR)/html/index.html"
 	@open $(COVERAGE_DIR)/html/index.html 2>/dev/null || true
 

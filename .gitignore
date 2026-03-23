@@ -14,3 +14,4 @@ publish/
 out/
 *.nupkg
 *.snupkg
+coverage

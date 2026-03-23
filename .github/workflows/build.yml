@@ -50,10 +50,18 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore InertiaCore.slnx
+        run: |
+          dotnet restore InertiaCore.slnx
+          dotnet tool restore
 
       - name: Build
         run: dotnet build InertiaCore.slnx --no-restore -c Release
 
       - name: Test with coverage
         run: dotnet test InertiaCore.slnx --no-build -c Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../../coverage/
+
+      - name: Coverage summary
+        run: |
+          dotnet reportgenerator -reports:coverage/coverage.cobertura.xml -targetdir:coverage -reporttypes:"TextSummary;MarkdownSummaryGithub"
+          cat coverage/Summary.txt
+          cat coverage/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
