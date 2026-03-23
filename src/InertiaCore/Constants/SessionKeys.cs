@@ -8,16 +8,16 @@ public static class SessionKeys
     /// <summary>
     /// Session key for clearing the Inertia history.
     /// </summary>
-    public static readonly string ClearHistory = "inertia.clear_history";
+    public const string ClearHistory = "inertia.clear_history";
 
     /// <summary>
     /// Session key for flash data.
     /// </summary>
-    public static readonly string FlashData = "inertia.flash_data";
+    public const string FlashData = "inertia.flash_data";
 
     /// <summary>
     /// Session key for preserving the URL fragment.
     /// </summary>
-    public static readonly string PreserveFragment = "inertia.preserve_fragment";
+    public const string PreserveFragment = "inertia.preserve_fragment";
 }
 
