@@ -17,35 +17,47 @@ public class InertiaMiddleware : IMiddleware
     {
         var isInertia = context.Request.Headers.ContainsKey(InertiaHeaders.Inertia);
 
-        // Version check: Inertia GET with mismatched version → 409
-        if (isInertia && HttpMethods.IsGet(context.Request.Method))
+        if (isInertia && HasVersionMismatch(context))
         {
-            var factory = context.RequestServices.GetRequiredService<InertiaResponseFactory>();
-            var clientVersion = context.Request.Headers[InertiaHeaders.Version].FirstOrDefault() ?? "";
-            var serverVersion = factory.GetVersion() ?? "";
-
-            if (clientVersion != serverVersion)
-            {
-                context.Response.StatusCode = StatusCodes.Status409Conflict;
-                context.Response.Headers[InertiaHeaders.Location] = context.Request.GetEncodedUrl();
-                return;
-            }
+            context.Response.StatusCode = StatusCodes.Status409Conflict;
+            context.Response.Headers[InertiaHeaders.Location] = context.Request.GetEncodedUrl();
+            return;
         }
 
-        // Vary header — set before next() since the response body may start streaming
         context.Response.Headers.Append("Vary", InertiaHeaders.Inertia);
 
         await next(context);
 
-        // 302 → 303 for PUT/PATCH/DELETE — safe to modify after next() because
-        // redirect responses don't write a body (headers are still mutable)
-        if (isInertia
-            && context.Response.StatusCode == StatusCodes.Status302Found
-            && (HttpMethods.IsPut(context.Request.Method)
-                || HttpMethods.IsPatch(context.Request.Method)
-                || HttpMethods.IsDelete(context.Request.Method)))
+        if (isInertia && ShouldConvertRedirect(context))
         {
             context.Response.StatusCode = StatusCodes.Status303SeeOther;
         }
+    }
+
+    private static bool HasVersionMismatch(HttpContext context)
+    {
+        if (!HttpMethods.IsGet(context.Request.Method))
+        {
+            return false;
+        }
+
+        var factory = context.RequestServices.GetRequiredService<InertiaResponseFactory>();
+        var clientVersion = context.Request.Headers[InertiaHeaders.Version].FirstOrDefault() ?? "";
+        var serverVersion = factory.GetVersion() ?? "";
+
+        return clientVersion != serverVersion;
+    }
+
+    private static bool ShouldConvertRedirect(HttpContext context)
+    {
+        return context.Response.StatusCode == StatusCodes.Status302Found
+            && IsWriteMethod(context.Request.Method);
+    }
+
+    private static bool IsWriteMethod(string method)
+    {
+        return HttpMethods.IsPut(method)
+            || HttpMethods.IsPatch(method)
+            || HttpMethods.IsDelete(method);
     }
 }
