@@ -72,10 +72,10 @@ public class InertiaResponse : IActionResult, IResult
     /// <inheritdoc />
     public async Task ExecuteAsync(HttpContext httpContext)
     {
-        var resolver = new PropsResolver(httpContext.RequestServices);
-        var (resolvedProps, _) = await resolver.ResolveAsync(SharedProps, Props);
+        var resolver = new PropsResolver(httpContext.RequestServices, httpContext.Request, Component);
+        var (resolvedProps, metadata) = await resolver.ResolveAsync(SharedProps, Props);
 
-        var page = BuildPageObject(httpContext, resolvedProps);
+        var page = BuildPageObject(httpContext, resolvedProps, metadata);
 
         if (!httpContext.Request.Headers.ContainsKey(InertiaHeaders.Inertia))
         {
@@ -91,15 +91,23 @@ public class InertiaResponse : IActionResult, IResult
 
     private Dictionary<string, object?> BuildPageObject(
         HttpContext httpContext,
-        Dictionary<string, object?> resolvedProps)
+        Dictionary<string, object?> resolvedProps,
+        Dictionary<string, object?> metadata)
     {
-        return new Dictionary<string, object?>
+        var page = new Dictionary<string, object?>
         {
             ["component"] = Component,
             ["props"] = resolvedProps,
             ["url"] = GetUrl(httpContext),
             ["version"] = Version,
         };
+
+        foreach (var (key, value) in metadata)
+        {
+            page[key] = value;
+        }
+
+        return page;
     }
 
     private static string GetUrl(HttpContext httpContext)
