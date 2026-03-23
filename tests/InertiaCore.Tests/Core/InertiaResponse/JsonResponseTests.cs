@@ -1,5 +1,6 @@
 using System.Text.Json;
 using InertiaCore.Constants;
+using InertiaCore.Props;
 
 namespace InertiaCore.Tests.Core.InertiaResponse;
 
@@ -156,5 +157,51 @@ public class JsonResponseTests : InertiaResponseTestBase
 
         var page = await ReadJsonResponse(context);
         Assert.Equal("page", page["props"].GetProperty("key").GetString());
+    }
+
+    [Fact]
+    public async Task DeferProp_produces_deferredProps_in_page_object()
+    {
+        var props = new Dictionary<string, object?>
+        {
+            ["name"] = "Alice",
+            ["charts"] = new DeferProp(() => (object?)"heavy", group: "analytics"),
+        };
+        var response = CreateResponse(component: "Dashboard", props: props);
+        var context = CreateInertiaHttpContext();
+
+        await response.ExecuteAsync(context);
+
+        var page = await ReadJsonResponse(context);
+
+        // DeferProp excluded from props (IIgnoreFirstLoad)
+        Assert.DoesNotContain(page["props"].EnumerateObject(), p => p.Name == "charts");
+
+        // Metadata present
+        Assert.True(page.ContainsKey("deferredProps"));
+        var deferred = page["deferredProps"];
+        Assert.Equal(JsonValueKind.Array, deferred.ValueKind);
+        Assert.Equal(1, deferred.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task MergeProp_produces_mergeProps_in_page_object()
+    {
+        var props = new Dictionary<string, object?>
+        {
+            ["items"] = new MergeProp(new[] { 1, 2, 3 }),
+        };
+        var response = CreateResponse(props: props);
+        var context = CreateInertiaHttpContext();
+
+        await response.ExecuteAsync(context);
+
+        var page = await ReadJsonResponse(context);
+
+        // MergeProp included in props (not IIgnoreFirstLoad)
+        Assert.Contains(page["props"].EnumerateObject(), p => p.Name == "items");
+
+        // Metadata present
+        Assert.True(page.ContainsKey("mergeProps"));
     }
 }
