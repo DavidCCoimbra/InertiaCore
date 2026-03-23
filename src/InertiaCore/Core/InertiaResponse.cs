@@ -72,13 +72,10 @@ public class InertiaResponse : IActionResult, IResult
     /// <inheritdoc />
     public async Task ExecuteAsync(HttpContext httpContext)
     {
-        var mergedProps = new Dictionary<string, object?>(SharedProps);
-        foreach (var (key, value) in Props)
-        {
-            mergedProps[key] = value;
-        }
+        var resolver = new PropsResolver(httpContext.RequestServices);
+        var (resolvedProps, _) = await resolver.ResolveAsync(SharedProps, Props);
 
-        var page = BuildPageObject(httpContext, mergedProps);
+        var page = BuildPageObject(httpContext, resolvedProps);
 
         httpContext.Response.Headers.Vary = InertiaHeaders.Inertia;
 
