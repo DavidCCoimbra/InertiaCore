@@ -55,5 +55,5 @@ jobs:
       - name: Build
         run: dotnet build InertiaCore.slnx --no-restore -c Release
 
-      - name: Test
-        run: dotnet test InertiaCore.slnx --no-build -c Release
+      - name: Test with coverage
+        run: dotnet test InertiaCore.slnx --no-build -c Release /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura /p:CoverletOutput=../../coverage/
