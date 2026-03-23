@@ -32,11 +32,13 @@ public class InertiaMiddleware : IMiddleware
             }
         }
 
-        await next(context);
-
+        // Vary header — set before next() since the response body may start streaming
         context.Response.Headers.Append("Vary", InertiaHeaders.Inertia);
 
-        // 302 → 303 for PUT/PATCH/DELETE on Inertia requests
+        await next(context);
+
+        // 302 → 303 for PUT/PATCH/DELETE — safe to modify after next() because
+        // redirect responses don't write a body (headers are still mutable)
         if (isInertia
             && context.Response.StatusCode == StatusCodes.Status302Found
             && (HttpMethods.IsPut(context.Request.Method)

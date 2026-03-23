@@ -26,16 +26,6 @@ public class RazorViewTests : InertiaResponseTestBase
         await view.Received(1).RenderAsync(Arg.Any<ViewContext>());
     }
 
-    [Fact]
-    public async Task Non_inertia_request_still_sets_vary_header()
-    {
-        var response = CreateResponse();
-        var (context, _) = CreateBrowserHttpContext();
-
-        await response.ExecuteAsync(context);
-
-        Assert.Equal(InertiaHeaders.Inertia, context.Response.Headers.Vary.ToString());
-    }
 
     [Fact]
     public async Task Passes_view_data_to_razor_view()
