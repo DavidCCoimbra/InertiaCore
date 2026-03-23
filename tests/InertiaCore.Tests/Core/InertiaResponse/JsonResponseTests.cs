@@ -40,17 +40,6 @@ public class JsonResponseTests : InertiaResponseTestBase
     }
 
     [Fact]
-    public async Task Sets_vary_header()
-    {
-        var response = CreateResponse();
-        var context = CreateInertiaHttpContext();
-
-        await response.ExecuteAsync(context);
-
-        Assert.Equal(InertiaHeaders.Inertia, context.Response.Headers.Vary.ToString());
-    }
-
-    [Fact]
     public async Task Page_object_contains_component()
     {
         var response = CreateResponse(component: "Users/Index");

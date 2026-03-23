@@ -77,8 +77,6 @@ public class InertiaResponse : IActionResult, IResult
 
         var page = BuildPageObject(httpContext, resolvedProps);
 
-        httpContext.Response.Headers.Vary = InertiaHeaders.Inertia;
-
         if (!httpContext.Request.Headers.ContainsKey(InertiaHeaders.Inertia))
         {
             await RenderRazorView(httpContext, page);
