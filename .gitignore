@@ -1,17 +1,33 @@
+# Build output
 bin/
 obj/
+publish/
+out/
+
+# IDE / editor
+.idea/
+.vs/
 *.user
 *.suo
+*.DotSettings.user
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# NuGet packages
+*.nupkg
+*.snupkg
+
+# Test coverage
+coverage/
+TestResults/
+
+# ASP.NET Core
+**/Properties/launchSettings.json
+
+# Cached build artifacts
 *.cache
 *.dll
 *.pdb
-.idea/
-.vs/
-*.swp
-.DS_Store
-Thumbs.db
-publish/
-out/
-*.nupkg
-*.snupkg
-coverage
