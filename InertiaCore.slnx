@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/InertiaCore.Testing/InertiaCore.Testing.csproj" />
+    <Project Path="src/InertiaCore/InertiaCore.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/InertiaCore.Tests/InertiaCore.Tests.csproj" />
+  </Folder>
+</Solution>
