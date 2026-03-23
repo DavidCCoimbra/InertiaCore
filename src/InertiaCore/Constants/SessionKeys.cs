@@ -9,12 +9,12 @@ public static class SessionKeys
     /// Session key for clearing the Inertia history.
     /// </summary>
     public static readonly string ClearHistory = "inertia.clear_history";
-    
+
     /// <summary>
     /// Session key for flash data.
     /// </summary>
     public static readonly string FlashData = "inertia.flash_data";
-    
+
     /// <summary>
     /// Session key for preserving the URL fragment.
     /// </summary>
