@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.slnx'
+      - '.editorconfig'
+      - '.github/workflows/build.yml'
+      - 'Makefile'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '*.slnx'
+      - '.editorconfig'
+      - '.github/workflows/build.yml'
+      - 'Makefile'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore InertiaCore.slnx
+
+      - name: Check formatting
+        run: dotnet format InertiaCore.slnx --verify-no-changes
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore InertiaCore.slnx
+
+      - name: Build
+        run: dotnet build InertiaCore.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test InertiaCore.slnx --no-build -c Release
