@@ -10,4 +10,17 @@
     <ProjectReference Include="../../src/InertiaCore/InertiaCore.csproj" />
   </ItemGroup>
 
+  <!-- InertiaCore.Vite is optional — only available when developing locally -->
+  <ItemGroup Condition="Exists('../../../InertiaCore.Vite/src/InertiaCore.Vite/InertiaCore.Vite.csproj')">
+    <ProjectReference Include="../../../InertiaCore.Vite/src/InertiaCore.Vite/InertiaCore.Vite.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="Exists('../../../InertiaCore.Vite/src/InertiaCore.Vite/InertiaCore.Vite.csproj')">
+    <DefineConstants>$(DefineConstants);HAS_VITE</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\" />
+  </ItemGroup>
+
 </Project>

@@ -180,8 +180,9 @@ public class JsonResponseTests : InertiaResponseTestBase
         // Metadata present
         Assert.True(page.ContainsKey("deferredProps"));
         var deferred = page["deferredProps"];
-        Assert.Equal(JsonValueKind.Array, deferred.ValueKind);
-        Assert.Equal(1, deferred.GetArrayLength());
+        Assert.Equal(JsonValueKind.Object, deferred.ValueKind);
+        Assert.True(deferred.TryGetProperty("analytics", out var group));
+        Assert.Contains(group.EnumerateArray(), e => e.GetString() == "charts");
     }
 
     [Fact]

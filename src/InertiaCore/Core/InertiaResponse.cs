@@ -142,7 +142,7 @@ public class InertiaResponse : IActionResult, IResult
         }
 
         var tempData = tempDataFactory.GetTempData(httpContext);
-        await using var writer = new StreamWriter(httpContext.Response.Body);
+        await using var writer = new StreamWriter(httpContext.Response.Body, leaveOpen: true);
 
         var viewContext = new ViewContext(actionContext, viewResult.View, viewData, tempData, writer, new HtmlHelperOptions());
         await viewResult.View.RenderAsync(viewContext);

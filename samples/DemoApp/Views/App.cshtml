@@ -1,13 +1,19 @@
 @addTagHelper *, InertiaCore
+@addTagHelper *, InertiaCore.Vite
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>InertiaCore Smoke Test</title>
+    <title>InertiaCore DemoApp</title>
     <inertia-head />
 </head>
 <body>
     <inertia />
+
+    <environment include="Development">
+        <vite-scripts />
+    </environment>
 </body>
 </html>
