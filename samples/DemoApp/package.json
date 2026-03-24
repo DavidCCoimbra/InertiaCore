@@ -1,0 +1,20 @@
+{
+    "private": true,
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build"
+    },
+    "dependencies": {
+        "@inertiajs/vue3": "^2.3.18",
+        "vue": "^3.5.30"
+    },
+    "devDependencies": {
+        "@tailwindcss/vite": "^4.2.1",
+        "@vitejs/plugin-vue": "^6.0.5",
+        "aspnetcore-vite-plugin": "file:../../../aspnetcore-vite-plugin",
+        "tailwindcss": "^4.2.1",
+        "typescript": "^5.0.0",
+        "vite": "^8.0.2"
+    }
+}

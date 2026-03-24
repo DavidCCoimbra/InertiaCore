@@ -20,10 +20,9 @@ public class MetadataTests : PropsResolverTestBase
         var (_, metadata) = await resolver.ResolveAsync(new(), page);
 
         Assert.True(metadata.ContainsKey("deferredProps"));
-        var deferred = (List<Dictionary<string, object?>>)metadata["deferredProps"]!;
-        Assert.Single(deferred);
-        Assert.Equal("charts", deferred[0]["key"]);
-        Assert.Equal("analytics", deferred[0]["group"]);
+        var deferred = (Dictionary<string, List<string>>)metadata["deferredProps"]!;
+        Assert.True(deferred.ContainsKey("analytics"));
+        Assert.Contains("charts", deferred["analytics"]);
     }
 
     [Fact]
@@ -37,8 +36,11 @@ public class MetadataTests : PropsResolverTestBase
 
         var (_, metadata) = await resolver.ResolveAsync(new(), page);
 
-        var deferred = (List<Dictionary<string, object?>>)metadata["deferredProps"]!;
-        Assert.Equal(true, deferred[0]["merge"]);
+        var deferred = (Dictionary<string, List<string>>)metadata["deferredProps"]!;
+        Assert.Contains("items", deferred["default"]);
+        // Merge metadata for deferred+merge prop goes into mergeProps
+        Assert.True(metadata.ContainsKey("mergeProps"));
+        Assert.Contains("items", (List<string>)metadata["mergeProps"]!);
     }
 
     [Fact]
@@ -125,9 +127,80 @@ public class MetadataTests : PropsResolverTestBase
 
         var (_, metadata) = await resetResolver.ResolveAsync(new(), page);
 
-        // Deferred metadata should not include merge flag due to reset
-        var deferred = (List<Dictionary<string, object?>>)metadata["deferredProps"]!;
-        Assert.False(deferred[0].ContainsKey("merge"));
+        // Deferred metadata still present
+        var deferred = (Dictionary<string, List<string>>)metadata["deferredProps"]!;
+        Assert.Contains("items", deferred["default"]);
+        // But merge metadata suppressed due to reset
+        Assert.False(metadata.ContainsKey("mergeProps"));
+    }
+
+    [Fact]
+    public async Task MergeProp_with_prepend_adds_prependProps_metadata()
+    {
+        var resolver = CreateResolver();
+        var page = new Dictionary<string, object?>
+        {
+            ["items"] = new MergeProp(new[] { 1, 2, 3 }).Prepend(),
+        };
+
+        var (_, metadata) = await resolver.ResolveAsync(new(), page);
+
+        Assert.True(metadata.ContainsKey("prependProps"));
+        var prepend = (List<string>)metadata["prependProps"]!;
+        Assert.Contains("items", prepend);
+        Assert.False(metadata.ContainsKey("mergeProps"));
+    }
+
+    [Fact]
+    public async Task MergeProp_with_matchOn_adds_matchPropsOn_metadata()
+    {
+        var resolver = CreateResolver();
+        var page = new Dictionary<string, object?>
+        {
+            ["users"] = new MergeProp(new[] { 1 }).Append("data", "id"),
+        };
+
+        var (_, metadata) = await resolver.ResolveAsync(new(), page);
+
+        Assert.True(metadata.ContainsKey("matchPropsOn"));
+        var matchOn = (List<string>)metadata["matchPropsOn"]!;
+        Assert.Contains("data.id", matchOn);
+    }
+
+    [Fact]
+    public async Task OnceProp_on_initial_load_collects_onceProps_metadata()
+    {
+        var resolver = CreateResolver();
+        var page = new Dictionary<string, object?>
+        {
+            ["perms"] = new OnceProp(() => (object?)"admin").Until(TimeSpan.FromMinutes(30)),
+        };
+
+        var (_, metadata) = await resolver.ResolveAsync(new(), page);
+
+        Assert.True(metadata.ContainsKey("onceProps"));
+        var once = (Dictionary<string, object?>)metadata["onceProps"]!;
+        Assert.True(once.ContainsKey("perms"));
+
+        var entry = (Dictionary<string, object?>)once["perms"]!;
+        Assert.Equal("perms", entry["prop"]);
+        Assert.NotNull(entry["expiresAt"]);
+    }
+
+    [Fact]
+    public async Task OptionalProp_with_once_collects_onceProps_metadata()
+    {
+        var resolver = CreateResolver();
+        var page = new Dictionary<string, object?>
+        {
+            ["lazy"] = new OptionalProp(() => (object?)"data").OnlyOnce("lazy-key"),
+        };
+
+        var (_, metadata) = await resolver.ResolveAsync(new(), page);
+
+        Assert.True(metadata.ContainsKey("onceProps"));
+        var once = (Dictionary<string, object?>)metadata["onceProps"]!;
+        Assert.True(once.ContainsKey("lazy"));
     }
 
     [Fact]
@@ -143,10 +216,13 @@ public class MetadataTests : PropsResolverTestBase
 
         var (_, metadata) = await resolver.ResolveAsync(new(), page);
 
-        var deferred = (List<Dictionary<string, object?>>)metadata["deferredProps"]!;
-        Assert.Equal(3, deferred.Count);
+        var deferred = (Dictionary<string, List<string>>)metadata["deferredProps"]!;
+        Assert.Equal(2, deferred.Count); // "charts" and "default" groups
 
-        var chartsGroup = deferred.Where(d => (string)d["group"]! == "charts").ToList();
-        Assert.Equal(2, chartsGroup.Count);
+        Assert.Equal(2, deferred["charts"].Count);
+        Assert.Contains("chart1", deferred["charts"]);
+        Assert.Contains("chart2", deferred["charts"]);
+        Assert.Single(deferred["default"]);
+        Assert.Contains("sidebar", deferred["default"]);
     }
 }

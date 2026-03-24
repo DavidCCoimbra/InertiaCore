@@ -20,9 +20,12 @@ public class PropsResolver
     private readonly HashSet<string> _resetProps;
     private readonly HashSet<string> _loadedOnceProps;
 
-    private readonly List<Dictionary<string, object?>> _deferredProps = [];
+    private readonly Dictionary<string, List<string>> _deferredProps = [];
     private readonly List<string> _mergeProps = [];
     private readonly List<string> _deepMergeProps = [];
+    private readonly List<string> _prependProps = [];
+    private readonly List<string> _matchPropsOn = [];
+    private readonly Dictionary<string, object?> _onceProps = [];
 
     /// <summary>
     /// Creates a resolver without HTTP context (for unit testing and non-HTTP scenarios).
@@ -41,7 +44,7 @@ public class PropsResolver
         _request = request;
 
         var partialComponent = request?.Headers[InertiaHeaders.PartialComponent].FirstOrDefault();
-        _isPartial = partialComponent != null && partialComponent == component;
+        _isPartial = !string.IsNullOrEmpty(partialComponent) && partialComponent == component;
 
         _only = ParseHeader(InertiaHeaders.PartialOnly);
         _except = ParseHeader(InertiaHeaders.PartialExcept);
@@ -100,19 +103,16 @@ public class PropsResolver
             return true;
         }
 
-        // AlwaysProp bypasses partial filtering
         if (value is AlwaysProp)
         {
             return true;
         }
 
-        // If "only" is specified, use only/leadsToOnly matching
         if (_only.Count > 0)
         {
             return MatchesOnly(path) || LeadsToOnly(path);
         }
 
-        // If "except" is specified, exclude matching paths
         if (_except.Count > 0)
         {
             return !MatchesExcept(path);
@@ -141,25 +141,33 @@ public class PropsResolver
     {
         if (value is IDeferrable deferrable && deferrable.Defer.ShouldDefer())
         {
-            var entry = new Dictionary<string, object?>
+            var group = deferrable.Defer.Group();
+
+            if (!_deferredProps.TryGetValue(group, out var groupList))
             {
-                ["key"] = path,
-                ["group"] = deferrable.Defer.Group(),
-            };
+                groupList = [];
+                _deferredProps[group] = groupList;
+            }
+
+            groupList.Add(path);
 
             if (value is IMergeable mergeable && mergeable.Merge.ShouldMerge()
                 && !_resetProps.Contains(path))
             {
-                entry["merge"] = true;
+                _mergeProps.Add(path);
             }
-
-            _deferredProps.Add(entry);
         }
 
-        // TODO: Once metadata collection will be added when the client protocol requires it
+        CollectOnceMetadata(path, value);
     }
 
     private void CollectMetadata(string path, object? value)
+    {
+        CollectMergeMetadata(path, value);
+        CollectOnceMetadata(path, value);
+    }
+
+    private void CollectMergeMetadata(string path, object? value)
     {
         if (value is not IMergeable mergeable)
         {
@@ -175,10 +183,39 @@ public class PropsResolver
         {
             _deepMergeProps.Add(path);
         }
+        else if (mergeable.Merge.PrependsAtRoot())
+        {
+            _prependProps.Add(path);
+        }
         else
         {
             _mergeProps.Add(path);
         }
+
+        var matchesOn = mergeable.Merge.MatchesOn();
+        if (matchesOn.Length > 0)
+        {
+            _matchPropsOn.AddRange(matchesOn);
+        }
+    }
+
+    private void CollectOnceMetadata(string path, object? value)
+    {
+        if (value is not IOnceable onceable)
+        {
+            return;
+        }
+
+        if (!onceable.Once.ShouldResolveOnce())
+        {
+            return;
+        }
+
+        _onceProps[path] = new Dictionary<string, object?>
+        {
+            ["prop"] = path,
+            ["expiresAt"] = onceable.Once.ExpiresAt(),
+        };
     }
 
     private async Task<object?> ResolveValueAsync(string path, object? value)
@@ -244,6 +281,21 @@ public class PropsResolver
         if (_deepMergeProps.Count > 0)
         {
             metadata["deepMergeProps"] = _deepMergeProps;
+        }
+
+        if (_prependProps.Count > 0)
+        {
+            metadata["prependProps"] = _prependProps;
+        }
+
+        if (_matchPropsOn.Count > 0)
+        {
+            metadata["matchPropsOn"] = _matchPropsOn;
+        }
+
+        if (_onceProps.Count > 0)
+        {
+            metadata["onceProps"] = _onceProps;
         }
 
         return metadata;
