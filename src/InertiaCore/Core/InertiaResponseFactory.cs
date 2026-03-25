@@ -15,6 +15,9 @@ public class InertiaResponseFactory
     private string _rootView;
     private readonly Dictionary<string, object?> _sharedProps = new();
     private string? _version;
+    private bool? _encryptHistory;
+    private bool _clearHistory;
+    private bool _preserveFragment;
 
     /// <summary>
     /// Initializes a new instance of <see cref="InertiaResponseFactory"/>.
@@ -37,7 +40,10 @@ public class InertiaResponseFactory
             sharedProps: new Dictionary<string, object?>(_sharedProps),
             rootView: _rootView,
             version: GetVersion(),
-            flashService: _flashService
+            flashService: _flashService,
+            encryptHistory: _encryptHistory ?? _options.EncryptHistory,
+            clearHistory: _clearHistory,
+            preserveFragment: _preserveFragment
         );
     }
 
@@ -89,6 +95,23 @@ public class InertiaResponseFactory
     /// then <see cref="InertiaOptions.VersionFunc"/>, then <see cref="InertiaOptions.Version"/>.
     /// </summary>
     public string? GetVersion() => _version ?? _options.ResolveVersion();
+
+    // -- History flags --
+
+    /// <summary>
+    /// Enables history encryption for this request.
+    /// </summary>
+    public void EncryptHistory(bool encrypt = true) => _encryptHistory = encrypt;
+
+    /// <summary>
+    /// Signals the client to clear the history state after this response.
+    /// </summary>
+    public void ClearHistory() => _clearHistory = true;
+
+    /// <summary>
+    /// Signals the client to preserve the URL fragment across this redirect.
+    /// </summary>
+    public void PreserveFragment() => _preserveFragment = true;
 
     // -- Flash (delegates to InertiaFlashService) --
 
