@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IInertiaErrorService, InertiaErrorService>();
         services.AddScoped<InertiaResponseFactory>();
         services.AddSingleton<InertiaMiddleware>();
+        services.AddScoped<EncryptHistoryMiddleware>();
 
         return services;
     }

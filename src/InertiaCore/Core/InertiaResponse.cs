@@ -29,6 +29,9 @@ public class InertiaResponse : IActionResult, IResult
     internal string? Version { get; }
 
     private readonly IInertiaFlashService? _flashService;
+    private readonly bool _encryptHistory;
+    private readonly bool _clearHistory;
+    private readonly bool _preserveFragment;
     private readonly Dictionary<string, object?> _viewData = new();
 
     /// <summary>
@@ -40,7 +43,10 @@ public class InertiaResponse : IActionResult, IResult
         Dictionary<string, object?> sharedProps,
         string rootView,
         string? version,
-        IInertiaFlashService? flashService = null)
+        IInertiaFlashService? flashService = null,
+        bool encryptHistory = false,
+        bool clearHistory = false,
+        bool preserveFragment = false)
     {
         Component = component;
         Props = props;
@@ -48,6 +54,9 @@ public class InertiaResponse : IActionResult, IResult
         RootView = rootView;
         Version = version;
         _flashService = flashService;
+        _encryptHistory = encryptHistory;
+        _clearHistory = clearHistory;
+        _preserveFragment = preserveFragment;
     }
 
     /// <summary>
@@ -110,6 +119,21 @@ public class InertiaResponse : IActionResult, IResult
         foreach (var (key, value) in metadata)
         {
             page[key] = value;
+        }
+
+        if (_encryptHistory)
+        {
+            page["encryptHistory"] = true;
+        }
+
+        if (_clearHistory)
+        {
+            page["clearHistory"] = true;
+        }
+
+        if (_preserveFragment)
+        {
+            page["preserveFragment"] = true;
         }
 
         return page;
