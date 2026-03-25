@@ -204,6 +204,43 @@ public class MetadataTests : PropsResolverTestBase
     }
 
     [Fact]
+    public async Task SharedPropKeys_tracks_shared_prop_origins()
+    {
+        var resolver = CreateResolver();
+        var shared = new Dictionary<string, object?>
+        {
+            ["appName"] = "MyApp",
+            ["errors"] = new Dictionary<string, object?>(),
+        };
+        var page = new Dictionary<string, object?>
+        {
+            ["user"] = "Alice",
+        };
+
+        var (_, metadata) = await resolver.ResolveAsync(shared, page);
+
+        Assert.True(metadata.ContainsKey("sharedProps"));
+        var sharedKeys = (List<string>)metadata["sharedProps"]!;
+        Assert.Contains("appName", sharedKeys);
+        Assert.Contains("errors", sharedKeys);
+        Assert.DoesNotContain("user", sharedKeys);
+    }
+
+    [Fact]
+    public async Task No_sharedProps_metadata_when_no_shared()
+    {
+        var resolver = CreateResolver();
+        var page = new Dictionary<string, object?>
+        {
+            ["name"] = "Alice",
+        };
+
+        var (_, metadata) = await resolver.ResolveAsync(new(), page);
+
+        Assert.False(metadata.ContainsKey("sharedProps"));
+    }
+
+    [Fact]
     public async Task Multiple_deferred_props_grouped()
     {
         var resolver = CreateResolver();

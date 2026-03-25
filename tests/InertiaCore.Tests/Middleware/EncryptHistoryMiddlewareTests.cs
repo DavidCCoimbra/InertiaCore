@@ -2,6 +2,7 @@ using InertiaCore.Configuration;
 using InertiaCore.Core;
 using InertiaCore.Middleware;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 
@@ -11,15 +12,13 @@ namespace InertiaCore.Tests.Middleware;
 public class EncryptHistoryMiddlewareTests
 {
     [Fact]
-    public async Task Enables_encrypt_history_on_factory()
+    public async Task Calls_next()
     {
-        var flashService = Substitute.For<IInertiaFlashService>();
-        var factory = new InertiaResponseFactory(
-            Options.Create(new InertiaOptions()), flashService);
-        var middleware = new EncryptHistoryMiddleware(factory);
+        var middleware = new EncryptHistoryMiddleware();
+        var context = CreateHttpContext();
 
         var nextCalled = false;
-        await middleware.InvokeAsync(new DefaultHttpContext(), _ =>
+        await middleware.InvokeAsync(context, _ =>
         {
             nextCalled = true;
             return Task.CompletedTask;
@@ -31,24 +30,34 @@ public class EncryptHistoryMiddlewareTests
     [Fact]
     public async Task Render_after_middleware_includes_encryptHistory()
     {
-        var flashService = Substitute.For<IInertiaFlashService>();
-        var factory = new InertiaResponseFactory(
-            Options.Create(new InertiaOptions()), flashService);
-        var middleware = new EncryptHistoryMiddleware(factory);
+        var middleware = new EncryptHistoryMiddleware();
+        var context = CreateHttpContext();
 
-        await middleware.InvokeAsync(new DefaultHttpContext(), _ => Task.CompletedTask);
+        await middleware.InvokeAsync(context, _ => Task.CompletedTask);
 
+        var factory = context.RequestServices.GetRequiredService<InertiaResponseFactory>();
         var response = factory.Render("Test");
-        var context = new DefaultHttpContext();
-        context.Request.Headers["X-Inertia"] = "true";
-        context.Response.Body = new MemoryStream();
+        var renderContext = new DefaultHttpContext();
+        renderContext.Request.Headers["X-Inertia"] = "true";
+        renderContext.Response.Body = new MemoryStream();
 
-        await response.ExecuteAsync(context);
+        await response.ExecuteAsync(renderContext);
 
-        context.Response.Body.Position = 0;
+        renderContext.Response.Body.Position = 0;
         var page = await System.Text.Json.JsonSerializer.DeserializeAsync<System.Text.Json.JsonElement>(
-            context.Response.Body);
+            renderContext.Response.Body);
         Assert.True(page.TryGetProperty("encryptHistory", out var val));
         Assert.True(val.GetBoolean());
+    }
+
+    private static DefaultHttpContext CreateHttpContext()
+    {
+        var context = new DefaultHttpContext();
+        var services = new ServiceCollection();
+        services.AddSingleton(Substitute.For<IInertiaFlashService>());
+        services.AddSingleton(Options.Create(new InertiaOptions()));
+        services.AddScoped<InertiaResponseFactory>();
+        context.RequestServices = services.BuildServiceProvider();
+        return context;
     }
 }

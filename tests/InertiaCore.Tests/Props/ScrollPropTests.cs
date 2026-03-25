@@ -143,6 +143,26 @@ public class ScrollPropTests
         Assert.Equal(1, dict["currentPage"]);
     }
 
+    [Fact]
+    public async Task Resolves_async_service_provider_callback()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton(new[] { "a", "b" });
+        var sp = services.BuildServiceProvider();
+
+        var prop = new ScrollProp<string[]>(
+            async (IServiceProvider serviceProvider) =>
+            {
+                await Task.CompletedTask;
+                return serviceProvider.GetRequiredService<string[]>();
+            });
+
+        var result = await prop.ResolveAsync(sp);
+
+        var dict = Assert.IsType<Dictionary<string, object?>>(result);
+        Assert.Equal(new[] { "a", "b" }, dict["data"]);
+    }
+
     // -- Defer --
 
     [Fact]

@@ -66,6 +66,39 @@ public class ServiceCollectionExtensionsTests
     }
 
     [Fact]
+    public void Registers_IInertiaFlashService_as_scoped()
+    {
+        var services = new ServiceCollection();
+
+        services.AddInertia();
+
+        var descriptor = services.Single(s => s.ServiceType == typeof(IInertiaFlashService));
+        Assert.Equal(ServiceLifetime.Scoped, descriptor.Lifetime);
+    }
+
+    [Fact]
+    public void Registers_IInertiaErrorService_as_scoped()
+    {
+        var services = new ServiceCollection();
+
+        services.AddInertia();
+
+        var descriptor = services.Single(s => s.ServiceType == typeof(IInertiaErrorService));
+        Assert.Equal(ServiceLifetime.Scoped, descriptor.Lifetime);
+    }
+
+    [Fact]
+    public void Registers_EncryptHistoryMiddleware_as_singleton()
+    {
+        var services = new ServiceCollection();
+
+        services.AddInertia();
+
+        var descriptor = services.Single(s => s.ServiceType == typeof(EncryptHistoryMiddleware));
+        Assert.Equal(ServiceLifetime.Singleton, descriptor.Lifetime);
+    }
+
+    [Fact]
     public void Returns_service_collection_for_chaining()
     {
         var services = new ServiceCollection();
