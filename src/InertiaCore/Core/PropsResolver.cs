@@ -23,6 +23,7 @@ public class PropsResolver
     private readonly HashSet<string> _resetProps;
     private readonly HashSet<string> _loadedOnceProps;
 
+    private readonly List<string> _sharedPropKeys = [];
     private readonly Dictionary<string, List<string>> _deferredProps = [];
     private readonly List<string> _mergeProps = [];
     private readonly List<string> _deepMergeProps = [];
@@ -66,6 +67,8 @@ public class PropsResolver
         Dictionary<string, object?> pageProps)
     {
         var merged = new Dictionary<string, object?>(sharedProps);
+        _sharedPropKeys.AddRange(sharedProps.Keys);
+
         foreach (var (key, value) in pageProps)
         {
             merged[key] = value;
@@ -306,6 +309,11 @@ public class PropsResolver
         if (_onceProps.Count > 0)
         {
             metadata["onceProps"] = _onceProps;
+        }
+
+        if (_sharedPropKeys.Count > 0)
+        {
+            metadata["sharedProps"] = _sharedPropKeys;
         }
 
         return metadata;

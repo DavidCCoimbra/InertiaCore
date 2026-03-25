@@ -146,6 +146,25 @@ public class PropFactoryTests : InertiaResponseFactoryTestBase
         Assert.IsType<OnceProp>(shared);
     }
 
+    // -- Scroll --
+
+    [Fact]
+    public void Scroll_with_value_returns_ScrollProp()
+    {
+        var prop = InertiaCore.Core.InertiaResponseFactory.Scroll(new[] { 1, 2, 3 });
+
+        Assert.IsType<ScrollProp<int[]>>(prop);
+        Assert.True(prop.Merge.ShouldMerge());
+    }
+
+    [Fact]
+    public void Scroll_with_callback_returns_ScrollProp()
+    {
+        var prop = InertiaCore.Core.InertiaResponseFactory.Scroll(() => new[] { 1, 2, 3 });
+
+        Assert.IsType<ScrollProp<int[]>>(prop);
+    }
+
     // -- Usable in Render --
 
     [Fact]

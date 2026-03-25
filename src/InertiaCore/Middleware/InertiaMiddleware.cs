@@ -8,7 +8,7 @@ namespace InertiaCore.Middleware;
 
 /// <summary>
 /// Middleware implementing the core Inertia HTTP protocol: version conflict detection,
-/// redirect conversion, flash/error persistence, and Vary headers.
+/// redirect conversion, flash/error persistence, fragment handling, and Vary headers.
 /// </summary>
 public class InertiaMiddleware : IMiddleware
 {
@@ -25,26 +25,46 @@ public class InertiaMiddleware : IMiddleware
         }
 
         context.Response.Headers.Append("Vary", InertiaHeaders.Inertia);
-
-        var errorService = context.RequestServices.GetService<IInertiaErrorService>();
-        var factory = context.RequestServices.GetRequiredService<InertiaResponseFactory>();
-        errorService?.ShareErrors(factory);
+        ShareDefaultProps(context);
 
         await next(context);
 
-        var flashService = context.RequestServices.GetService<IInertiaFlashService>();
+        HandlePostResponse(context, isInertia);
+    }
 
+    private static void ShareDefaultProps(HttpContext context)
+    {
+        var errorService = context.RequestServices.GetService<IInertiaErrorService>();
+        var factory = context.RequestServices.GetRequiredService<InertiaResponseFactory>();
+        errorService?.ShareErrors(factory);
+    }
+
+    private static void HandlePostResponse(HttpContext context, bool isInertia)
+    {
         if (IsRedirect(context))
         {
-            flashService?.Persist();
-            flashService?.Reflash();
-            errorService?.Reflash();
+            PersistAndReflash(context);
         }
 
         if (isInertia && ShouldConvertRedirect(context))
         {
             context.Response.StatusCode = StatusCodes.Status303SeeOther;
         }
+
+        if (isInertia && IsRedirect(context) && HasFragmentRedirect(context))
+        {
+            ConvertToFragmentRedirect(context);
+        }
+    }
+
+    private static void PersistAndReflash(HttpContext context)
+    {
+        var flashService = context.RequestServices.GetService<IInertiaFlashService>();
+        var errorService = context.RequestServices.GetService<IInertiaErrorService>();
+
+        flashService?.Persist();
+        flashService?.Reflash();
+        errorService?.Reflash();
     }
 
     private static bool HasVersionMismatch(HttpContext context)
@@ -77,5 +97,19 @@ public class InertiaMiddleware : IMiddleware
     private static bool IsRedirect(HttpContext context)
     {
         return context.Response.StatusCode is >= 300 and < 400;
+    }
+
+    private static bool HasFragmentRedirect(HttpContext context)
+    {
+        var location = context.Response.Headers.Location.FirstOrDefault();
+        return location != null && location.Contains('#');
+    }
+
+    private static void ConvertToFragmentRedirect(HttpContext context)
+    {
+        var location = context.Response.Headers.Location.FirstOrDefault()!;
+        context.Response.StatusCode = StatusCodes.Status409Conflict;
+        context.Response.Headers.Remove("Location");
+        context.Response.Headers[InertiaHeaders.Redirect] = location;
     }
 }

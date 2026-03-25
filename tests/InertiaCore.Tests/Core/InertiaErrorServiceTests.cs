@@ -91,6 +91,32 @@ public class InertiaErrorServiceTests
         service.Reflash();
     }
 
+    [Fact]
+    public void ShareErrors_without_tempdata_provider_does_not_throw()
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.RequestServices = new ServiceCollection().BuildServiceProvider();
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext.Returns(httpContext);
+        var service = new InertiaErrorService(httpContextAccessor);
+        var flashService = Substitute.For<IInertiaFlashService>();
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+
+        service.ShareErrors(factory);
+    }
+
+    [Fact]
+    public void Reflash_without_tempdata_provider_does_not_throw()
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.RequestServices = new ServiceCollection().BuildServiceProvider();
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext.Returns(httpContext);
+        var service = new InertiaErrorService(httpContextAccessor);
+
+        service.Reflash();
+    }
+
     private static (InertiaErrorService Service, InertiaResponseFactory Factory) CreateServiceWithErrors(
         Dictionary<string, string>? errors)
     {

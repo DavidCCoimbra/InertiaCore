@@ -49,6 +49,14 @@ public class ScrollProp<T> : IInertiaProp, IDeferrable, IMergeable
     {
     }
 
+    /// <summary>
+    /// Wraps an asynchronous callback with service provider access and optional scroll metadata.
+    /// </summary>
+    public ScrollProp(Func<IServiceProvider, Task<T?>> callback, string wrapper = "data", IProvidesScrollMetadata? metadataProvider = null)
+        : this((object?)callback, wrapper, metadataProvider)
+    {
+    }
+
     private ScrollProp(object? value, string wrapper, IProvidesScrollMetadata? metadataProvider)
     {
         _value = value;
