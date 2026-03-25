@@ -1,5 +1,6 @@
 using System.Reflection;
 using InertiaCore.Configuration;
+using InertiaCore.Contracts;
 using InertiaCore.Props;
 using Microsoft.Extensions.Options;
 
@@ -194,6 +195,18 @@ public class InertiaResponseFactory
     /// Creates a prop resolved once, wrapping an async callback.
     /// </summary>
     public static OnceProp Once(Func<Task<object?>> callback) => new(callback);
+
+    /// <summary>
+    /// Creates a scroll prop for infinite scroll patterns with pagination metadata.
+    /// </summary>
+    public static ScrollProp<T> Scroll<T>(T? value, string wrapper = "data", IProvidesScrollMetadata? metadataProvider = null) =>
+        new(value, wrapper, metadataProvider);
+
+    /// <summary>
+    /// Creates a scroll prop wrapping a callback.
+    /// </summary>
+    public static ScrollProp<T> Scroll<T>(Func<T?> callback, string wrapper = "data", IProvidesScrollMetadata? metadataProvider = null) =>
+        new(callback, wrapper, metadataProvider);
 
     /// <summary>
     /// Adds a once-resolved prop to shared props.

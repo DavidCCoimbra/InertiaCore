@@ -86,6 +86,29 @@ app.MapPost("/validation", (HttpContext context, InertiaResponseFactory inertia)
     return Results.Redirect("/validation");
 });
 
+// Scroll prop — infinite scroll / pagination demo
+app.MapGet("/scroll", (InertiaResponseFactory inertia, HttpContext context) =>
+{
+    var page = int.TryParse(context.Request.Query["page"], out var p) ? p : 1;
+    var pageSize = 5;
+    var totalItems = 23;
+    var allItems = Enumerable.Range(1, totalItems).Select(i => $"Item {i}").ToArray();
+    var pageItems = allItems.Skip((page - 1) * pageSize).Take(pageSize).ToArray();
+    var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+    var metadata = new SimpleScrollMetadata(
+        PageName: "page",
+        PreviousPage: page > 1 ? page - 1 : null,
+        NextPage: page < totalPages ? page + 1 : null,
+        CurrentPage: page);
+
+    return inertia.Render("Scroll/Index", new Dictionary<string, object?>
+    {
+        ["items"] = InertiaResponseFactory.Scroll(pageItems, wrapper: "data", metadataProvider: metadata),
+        ["totalPages"] = totalPages,
+    });
+});
+
 app.MapGet("/api/health", () => Results.Ok(new { Status = "ok" }));
 
 app.MapMethods("/redirect", new[] { "PUT" }, () => Results.Redirect("/"));
@@ -96,3 +119,16 @@ app.Run();
 /// Entry point marker for WebApplicationFactory in integration tests.
 /// </summary>
 public partial class Program;
+
+/// <summary>
+/// Simple scroll metadata implementation for the demo.
+/// </summary>
+internal record SimpleScrollMetadata(
+    string PageName, object? PreviousPage, object? NextPage, object? CurrentPage)
+    : InertiaCore.Contracts.IProvidesScrollMetadata
+{
+    public string GetPageName() => PageName;
+    public object? GetPreviousPage() => PreviousPage;
+    public object? GetNextPage() => NextPage;
+    public object? GetCurrentPage() => CurrentPage;
+}
