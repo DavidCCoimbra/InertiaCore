@@ -1,6 +1,7 @@
 using InertiaCore.Configuration;
 using InertiaCore.Core;
 using Microsoft.Extensions.Options;
+using NSubstitute;
 
 namespace InertiaCore.Tests.Core.ResponseFactory;
 
@@ -11,6 +12,7 @@ public abstract class InertiaResponseFactoryTestBase
     {
         var options = new InertiaOptions();
         configure?.Invoke(options);
-        return new InertiaResponseFactory(Options.Create(options));
+        var flashService = Substitute.For<IInertiaFlashService>();
+        return new InertiaResponseFactory(Options.Create(options), flashService);
     }
 }

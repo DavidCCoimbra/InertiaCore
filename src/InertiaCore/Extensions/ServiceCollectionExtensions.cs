@@ -18,6 +18,8 @@ public static class ServiceCollectionExtensions
         Action<InertiaOptions>? configure = null)
     {
         services.Configure(configure ?? (_ => { }));
+        services.AddHttpContextAccessor();
+        services.AddScoped<IInertiaFlashService, InertiaFlashService>();
         services.AddScoped<InertiaResponseFactory>();
         services.AddSingleton<InertiaMiddleware>();
 

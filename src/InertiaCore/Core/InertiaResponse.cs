@@ -28,6 +28,7 @@ public class InertiaResponse : IActionResult, IResult
     internal string RootView { get; }
     internal string? Version { get; }
 
+    private readonly IInertiaFlashService? _flashService;
     private readonly Dictionary<string, object?> _viewData = new();
 
     /// <summary>
@@ -38,13 +39,15 @@ public class InertiaResponse : IActionResult, IResult
         Dictionary<string, object?> props,
         Dictionary<string, object?> sharedProps,
         string rootView,
-        string? version)
+        string? version,
+        IInertiaFlashService? flashService = null)
     {
         Component = component;
         Props = props;
         SharedProps = sharedProps;
         RootView = rootView;
         Version = version;
+        _flashService = flashService;
     }
 
     /// <summary>
@@ -72,6 +75,8 @@ public class InertiaResponse : IActionResult, IResult
     /// <inheritdoc />
     public async Task ExecuteAsync(HttpContext httpContext)
     {
+        ConsumeFlashIntoSharedProps();
+
         var resolver = new PropsResolver(httpContext.RequestServices, httpContext.Request, Component);
         var (resolvedProps, metadata) = await resolver.ResolveAsync(SharedProps, Props);
 
@@ -108,6 +113,15 @@ public class InertiaResponse : IActionResult, IResult
         }
 
         return page;
+    }
+
+    private void ConsumeFlashIntoSharedProps()
+    {
+        var flash = _flashService?.Consume();
+        if (flash != null)
+        {
+            SharedProps["flash"] = flash;
+        }
     }
 
     private static string GetUrl(HttpContext httpContext)
