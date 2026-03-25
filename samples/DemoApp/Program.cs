@@ -67,6 +67,25 @@ app.MapPost("/flash", (InertiaResponseFactory inertia) =>
     return Results.Redirect("/flash");
 });
 
+// Validation errors — simulated form validation
+app.MapGet("/validation", (InertiaResponseFactory inertia) =>
+    inertia.Render("Validation/Index"));
+
+app.MapPost("/validation", (HttpContext context, InertiaResponseFactory inertia) =>
+{
+    // Simulate validation failure by storing errors in TempData
+    var errors = new Dictionary<string, string>
+    {
+        ["name"] = "Name is required.",
+        ["email"] = "Email must be a valid address.",
+    };
+    var tempDataFactory = context.RequestServices.GetRequiredService<Microsoft.AspNetCore.Mvc.ViewFeatures.ITempDataDictionaryFactory>();
+    var tempData = tempDataFactory.GetTempData(context);
+    tempData[InertiaCore.Constants.SessionKeys.Errors] = System.Text.Json.JsonSerializer.Serialize(errors);
+    tempData.Save();
+    return Results.Redirect("/validation");
+});
+
 app.MapGet("/api/health", () => Results.Ok(new { Status = "ok" }));
 
 app.MapMethods("/redirect", new[] { "PUT" }, () => Results.Redirect("/"));
