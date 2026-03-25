@@ -19,13 +19,14 @@ public class SsrTagHelperTests
     public void Renders_ssr_body_when_available()
     {
         var page = new Dictionary<string, object?> { ["component"] = "Test" };
-        var tagHelper = CreateTagHelper(page, ssrBody: "<div id=\"app\"><h1>SSR Rendered</h1></div>");
+        var tagHelper = CreateTagHelper(page, ssrBody: "<h1>SSR Rendered</h1>");
         var output = CreateOutput();
 
         tagHelper.Process(CreateContext(), output);
 
         var content = output.Content.GetContent();
         Assert.Contains("SSR Rendered", content);
+        Assert.Contains("data-page=", content);
         Assert.Contains("<h1>", content);
     }
 
