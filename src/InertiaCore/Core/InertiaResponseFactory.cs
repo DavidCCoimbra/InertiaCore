@@ -11,6 +11,7 @@ namespace InertiaCore.Core;
 public class InertiaResponseFactory
 {
     private readonly InertiaOptions _options;
+    private readonly IInertiaFlashService _flashService;
     private string _rootView;
     private readonly Dictionary<string, object?> _sharedProps = new();
     private string? _version;
@@ -18,9 +19,10 @@ public class InertiaResponseFactory
     /// <summary>
     /// Initializes a new instance of <see cref="InertiaResponseFactory"/>.
     /// </summary>
-    public InertiaResponseFactory(IOptions<InertiaOptions> options)
+    public InertiaResponseFactory(IOptions<InertiaOptions> options, IInertiaFlashService flashService)
     {
         _options = options.Value;
+        _flashService = flashService;
         _rootView = _options.RootView;
     }
 
@@ -34,7 +36,8 @@ public class InertiaResponseFactory
             props: props ?? new(),
             sharedProps: new Dictionary<string, object?>(_sharedProps),
             rootView: _rootView,
-            version: GetVersion()
+            version: GetVersion(),
+            flashService: _flashService
         );
     }
 
@@ -86,6 +89,26 @@ public class InertiaResponseFactory
     /// then <see cref="InertiaOptions.VersionFunc"/>, then <see cref="InertiaOptions.Version"/>.
     /// </summary>
     public string? GetVersion() => _version ?? _options.ResolveVersion();
+
+    // -- Flash (delegates to InertiaFlashService) --
+
+    /// <summary>
+    /// Stores flash data that will appear in the next response's page object.
+    /// </summary>
+    public void Flash(string key, object? value) =>
+        _flashService.Flash(key, value);
+
+    /// <summary>
+    /// Stores multiple flash data entries.
+    /// </summary>
+    public void Flash(Dictionary<string, object?> data) =>
+        _flashService.Flash(data);
+
+    /// <summary>
+    /// Returns the pending flash data for this request.
+    /// </summary>
+    public Dictionary<string, object?> GetFlashed() =>
+        _flashService.GetPending();
 
     // -- Prop factory methods --
 

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using InertiaCore.Constants;
+using InertiaCore.Core;
 using Microsoft.AspNetCore.Http;
 
 namespace InertiaCore.Tests.Core.InertiaResponse;
@@ -12,14 +13,16 @@ public abstract class InertiaResponseTestBase
         Dictionary<string, object?>? props = null,
         Dictionary<string, object?>? sharedProps = null,
         string rootView = "App",
-        string? version = null)
+        string? version = null,
+        IInertiaFlashService? flashService = null)
     {
         return new InertiaCore.Core.InertiaResponse(
             component: component,
             props: props ?? new Dictionary<string, object?>(),
             sharedProps: sharedProps ?? new Dictionary<string, object?>(),
             rootView: rootView,
-            version: version);
+            version: version,
+            flashService: flashService);
     }
 
     protected static DefaultHttpContext CreateInertiaHttpContext(string path = "/", string? queryString = null)

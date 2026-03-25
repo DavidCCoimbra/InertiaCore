@@ -16,7 +16,8 @@ builder.Services.AddVite(options =>
     options.EntryPoints = ["ClientApp/app.ts"];
 });
 #endif
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddCookieTempDataProvider();
 
 var app = builder.Build();
 
@@ -54,6 +55,17 @@ app.MapGet("/merge", (InertiaResponseFactory inertia) =>
         ["appendList"] = InertiaResponseFactory.Merge(new[] { "item-1", "item-2", "item-3" }),
         ["deepConfig"] = InertiaResponseFactory.Merge(new { Theme = "dark", Lang = "en" }).WithDeepMerge(),
     }));
+
+// Flash data — form submit with redirect
+app.MapGet("/flash", (InertiaResponseFactory inertia) =>
+    inertia.Render("Flash/Index"));
+
+app.MapPost("/flash", (InertiaResponseFactory inertia) =>
+{
+    inertia.Flash("success", "Form submitted successfully!");
+    inertia.Flash("timestamp", DateTimeOffset.UtcNow.ToString("T"));
+    return Results.Redirect("/flash");
+});
 
 app.MapGet("/api/health", () => Results.Ok(new { Status = "ok" }));
 

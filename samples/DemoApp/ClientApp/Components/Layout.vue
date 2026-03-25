@@ -9,6 +9,7 @@ import { Link } from '@inertiajs/vue3'
             <Link href="/dashboard" class="text-blue-600 hover:text-blue-800 hover:underline">Dashboard</Link>
             <Link href="/shared" class="text-blue-600 hover:text-blue-800 hover:underline">Shared Props</Link>
             <Link href="/merge" class="text-blue-600 hover:text-blue-800 hover:underline">Merge</Link>
+            <Link href="/flash" class="text-blue-600 hover:text-blue-800 hover:underline">Flash</Link>
         </nav>
 
         <slot />

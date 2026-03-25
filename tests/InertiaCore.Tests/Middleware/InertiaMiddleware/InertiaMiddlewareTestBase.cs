@@ -37,6 +37,8 @@ public abstract class InertiaMiddlewareTestBase
         var options = new InertiaOptions();
         configureOptions?.Invoke(options);
         services.AddSingleton(Options.Create(options));
+        services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
+        services.AddScoped<IInertiaFlashService, InertiaFlashService>();
         services.AddScoped<InertiaResponseFactory>();
         context.RequestServices = services.BuildServiceProvider();
 
