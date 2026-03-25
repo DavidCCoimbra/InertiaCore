@@ -1,0 +1,154 @@
+using System.Text.Json;
+using InertiaCore.Configuration;
+using InertiaCore.Constants;
+using InertiaCore.Core;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using NSubstitute;
+
+namespace InertiaCore.Tests.Core;
+
+[Trait("Class", "InertiaErrorService")]
+public class InertiaErrorServiceTests
+{
+    [Fact]
+    public async Task ShareErrors_adds_errors_to_props()
+    {
+        var errors = new Dictionary<string, string> { ["name"] = "Required" };
+        var (service, factory) = CreateServiceWithErrors(errors);
+
+        service.ShareErrors(factory);
+        var response = factory.Render("Test");
+        var context = CreateInertiaHttpContext();
+
+        await response.ExecuteAsync(context);
+
+        context.Response.Body.Position = 0;
+        var page = await JsonSerializer.DeserializeAsync<JsonElement>(context.Response.Body);
+        var propsErrors = page.GetProperty("props").GetProperty("errors");
+        Assert.Equal("Required", propsErrors.GetProperty("name").GetString());
+    }
+
+    [Fact]
+    public async Task ShareErrors_returns_empty_when_no_errors()
+    {
+        var (service, factory) = CreateServiceWithErrors(null);
+
+        service.ShareErrors(factory);
+        var response = factory.Render("Test");
+        var context = CreateInertiaHttpContext();
+
+        await response.ExecuteAsync(context);
+
+        context.Response.Body.Position = 0;
+        var page = await JsonSerializer.DeserializeAsync<JsonElement>(context.Response.Body);
+        var propsErrors = page.GetProperty("props").GetProperty("errors");
+        Assert.Empty(propsErrors.EnumerateObject());
+    }
+
+    [Fact]
+    public void Reflash_keeps_errors_in_tempdata()
+    {
+        var (service, tempData) = CreateServiceWithTempData();
+        tempData[SessionKeys.Errors] = "{}";
+
+        service.Reflash();
+
+        Assert.True(tempData.ContainsKey(SessionKeys.Errors));
+    }
+
+    [Fact]
+    public void Reflash_does_nothing_when_no_errors()
+    {
+        var (service, tempData) = CreateServiceWithTempData();
+
+        service.Reflash();
+
+        Assert.False(tempData.ContainsKey(SessionKeys.Errors));
+    }
+
+    [Fact]
+    public void ShareErrors_without_httpcontext_does_not_throw()
+    {
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext.Returns((HttpContext?)null);
+        var service = new InertiaErrorService(httpContextAccessor);
+        var flashService = Substitute.For<IInertiaFlashService>();
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+
+        service.ShareErrors(factory);
+    }
+
+    [Fact]
+    public void Reflash_without_httpcontext_does_not_throw()
+    {
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext.Returns((HttpContext?)null);
+        var service = new InertiaErrorService(httpContextAccessor);
+
+        service.Reflash();
+    }
+
+    private static (InertiaErrorService Service, InertiaResponseFactory Factory) CreateServiceWithErrors(
+        Dictionary<string, string>? errors)
+    {
+        var tempData = new TestTempDataDictionary();
+        if (errors != null)
+        {
+            tempData[SessionKeys.Errors] = JsonSerializer.Serialize(errors);
+        }
+
+        var tempDataFactory = Substitute.For<ITempDataDictionaryFactory>();
+        tempDataFactory.GetTempData(Arg.Any<HttpContext>()).Returns(tempData);
+
+        var httpContext = new DefaultHttpContext();
+        var services = new ServiceCollection();
+        services.AddSingleton(tempDataFactory);
+        httpContext.RequestServices = services.BuildServiceProvider();
+
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext.Returns(httpContext);
+
+        var errorService = new InertiaErrorService(httpContextAccessor);
+        var flashService = Substitute.For<IInertiaFlashService>();
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+
+        return (errorService, factory);
+    }
+
+    private static (InertiaErrorService Service, TestTempDataDictionary TempData) CreateServiceWithTempData()
+    {
+        var tempData = new TestTempDataDictionary();
+        var tempDataFactory = Substitute.For<ITempDataDictionaryFactory>();
+        tempDataFactory.GetTempData(Arg.Any<HttpContext>()).Returns(tempData);
+
+        var httpContext = new DefaultHttpContext();
+        var services = new ServiceCollection();
+        services.AddSingleton(tempDataFactory);
+        httpContext.RequestServices = services.BuildServiceProvider();
+
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext.Returns(httpContext);
+
+        return (new InertiaErrorService(httpContextAccessor), tempData);
+    }
+
+    private static DefaultHttpContext CreateInertiaHttpContext()
+    {
+        var context = new DefaultHttpContext();
+        context.Request.Headers[InertiaHeaders.Inertia] = "true";
+        context.Response.Body = new MemoryStream();
+        return context;
+    }
+
+    private sealed class TestTempDataDictionary : Dictionary<string, object?>, ITempDataDictionary
+    {
+        public void Keep() { }
+        public void Keep(string key) { }
+        public void Load() { }
+        public object? Peek(string key) => TryGetValue(key, out var v) ? v : null;
+        public void Save() { }
+    }
+}

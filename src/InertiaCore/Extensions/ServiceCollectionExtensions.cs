@@ -20,6 +20,7 @@ public static class ServiceCollectionExtensions
         services.Configure(configure ?? (_ => { }));
         services.AddHttpContextAccessor();
         services.AddScoped<IInertiaFlashService, InertiaFlashService>();
+        services.AddScoped<IInertiaErrorService, InertiaErrorService>();
         services.AddScoped<InertiaResponseFactory>();
         services.AddSingleton<InertiaMiddleware>();
 

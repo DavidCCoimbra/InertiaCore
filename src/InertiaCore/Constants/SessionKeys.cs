@@ -11,6 +11,11 @@ public static class SessionKeys
     public const string ClearHistory = "inertia.clear_history";
 
     /// <summary>
+    /// TempData key for validation errors.
+    /// </summary>
+    public const string Errors = "inertia.errors";
+
+    /// <summary>
     /// Session key for flash data.
     /// </summary>
     public const string FlashData = "inertia.flash_data";

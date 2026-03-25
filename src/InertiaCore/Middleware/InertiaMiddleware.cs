@@ -8,7 +8,7 @@ namespace InertiaCore.Middleware;
 
 /// <summary>
 /// Middleware implementing the core Inertia HTTP protocol: version conflict detection,
-/// redirect conversion, flash persistence, and Vary headers.
+/// redirect conversion, flash/error persistence, and Vary headers.
 /// </summary>
 public class InertiaMiddleware : IMiddleware
 {
@@ -26,6 +26,10 @@ public class InertiaMiddleware : IMiddleware
 
         context.Response.Headers.Append("Vary", InertiaHeaders.Inertia);
 
+        var errorService = context.RequestServices.GetService<IInertiaErrorService>();
+        var factory = context.RequestServices.GetRequiredService<InertiaResponseFactory>();
+        errorService?.ShareErrors(factory);
+
         await next(context);
 
         var flashService = context.RequestServices.GetService<IInertiaFlashService>();
@@ -34,6 +38,7 @@ public class InertiaMiddleware : IMiddleware
         {
             flashService?.Persist();
             flashService?.Reflash();
+            errorService?.Reflash();
         }
 
         if (isInertia && ShouldConvertRedirect(context))
