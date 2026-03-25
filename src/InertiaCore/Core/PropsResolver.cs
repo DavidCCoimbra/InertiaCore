@@ -1,4 +1,5 @@
 using InertiaCore.Constants;
+using InertiaCore.Context;
 using InertiaCore.Contracts;
 using InertiaCore.Props;
 using Microsoft.AspNetCore.Http;
@@ -13,6 +14,8 @@ public class PropsResolver
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly HttpRequest? _request;
+    private readonly HttpContext? _httpContext;
+    private readonly string? _component;
 
     private readonly bool _isPartial;
     private readonly HashSet<string> _only;
@@ -42,6 +45,8 @@ public class PropsResolver
     {
         _serviceProvider = serviceProvider;
         _request = request;
+        _httpContext = request?.HttpContext;
+        _component = component;
 
         var partialComponent = request?.Headers[InertiaHeaders.PartialComponent].FirstOrDefault();
         _isPartial = !string.IsNullOrEmpty(partialComponent) && partialComponent == component;
@@ -65,6 +70,9 @@ public class PropsResolver
         {
             merged[key] = value;
         }
+
+        merged = ResolveProviders(merged);
+        merged = ExpandDotNotation(merged);
 
         var resolved = await ResolvePropsAsync(merged, prefix: "");
         return (resolved, BuildMetadata());
@@ -239,6 +247,8 @@ public class PropsResolver
         return value switch
         {
             IInertiaProp prop => await prop.ResolveAsync(_serviceProvider),
+            IProvidesInertiaProperty provider when _httpContext != null =>
+                provider.ToInertiaProperty(new PropertyContext(path, [], _httpContext)),
             Func<IServiceProvider, Task<object?>> f => await f(_serviceProvider),
             Func<IServiceProvider, object?> f => f(_serviceProvider),
             Func<Task<object?>> f => await f(),
@@ -299,6 +309,72 @@ public class PropsResolver
         }
 
         return metadata;
+    }
+
+    // -- Providers and dot-notation --
+
+    private Dictionary<string, object?> ResolveProviders(Dictionary<string, object?> props)
+    {
+        if (_httpContext == null || _component == null)
+        {
+            return props;
+        }
+
+        var result = new Dictionary<string, object?>();
+        var renderContext = new RenderContext(_component, _httpContext);
+
+        foreach (var (key, value) in props)
+        {
+            if (value is IProvidesInertiaProperties provider)
+            {
+                foreach (var kvp in provider.ToInertiaProperties(renderContext))
+                {
+                    result[kvp.Key] = kvp.Value;
+                }
+            }
+            else
+            {
+                result[key] = value;
+            }
+        }
+
+        return result;
+    }
+
+    private static Dictionary<string, object?> ExpandDotNotation(Dictionary<string, object?> props)
+    {
+        var dotKeys = props.Keys.Where(k => k.Contains('.')).ToList();
+        if (dotKeys.Count == 0)
+        {
+            return props;
+        }
+
+        var result = new Dictionary<string, object?>(props);
+        foreach (var dotKey in dotKeys)
+        {
+            result.Remove(dotKey);
+            SetNestedValue(result, dotKey.Split('.'), props[dotKey]);
+        }
+
+        return result;
+    }
+
+    private static void SetNestedValue(Dictionary<string, object?> dict, string[] segments, object? value)
+    {
+        var current = dict;
+        for (var i = 0; i < segments.Length - 1; i++)
+        {
+            var segment = segments[i];
+            if (!current.TryGetValue(segment, out var existing) || existing is not Dictionary<string, object?> nested)
+            {
+                nested = new Dictionary<string, object?>();
+                current[segment] = nested;
+            }
+
+            current = nested;
+        }
+
+        current[segments[^1]] = value;
     }
 
     // -- Partial reload matching --
