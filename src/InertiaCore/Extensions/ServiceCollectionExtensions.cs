@@ -1,6 +1,7 @@
 using InertiaCore.Configuration;
 using InertiaCore.Core;
 using InertiaCore.Middleware;
+using InertiaCore.Ssr;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace InertiaCore.Extensions;
@@ -24,6 +25,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<InertiaResponseFactory>();
         services.AddSingleton<InertiaMiddleware>();
         services.AddSingleton<EncryptHistoryMiddleware>();
+        services.AddHttpClient<ISsrGateway, HttpSsrGateway>();
 
         return services;
     }

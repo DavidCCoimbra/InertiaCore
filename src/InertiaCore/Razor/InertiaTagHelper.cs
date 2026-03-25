@@ -43,6 +43,13 @@ public class InertiaTagHelper : TagHelper
 
         output.TagName = null;
 
+        // If SSR body is available, render it instead of the data-page div
+        if (ViewContext.ViewData["InertiaBody"] is string ssrBody)
+        {
+            output.Content.SetHtmlContent(ssrBody);
+            return;
+        }
+
         var json = JsonSerializer.Serialize(page, s_jsonOptions);
         var encoded = HttpUtility.HtmlAttributeEncode(json);
         output.Content.SetHtmlContent($"<div id=\"{Id}\" data-page=\"{encoded}\"></div>");

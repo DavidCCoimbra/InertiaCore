@@ -2,6 +2,7 @@ using System.Reflection;
 using InertiaCore.Configuration;
 using InertiaCore.Contracts;
 using InertiaCore.Props;
+using InertiaCore.Ssr;
 using Microsoft.Extensions.Options;
 
 namespace InertiaCore.Core;
@@ -13,6 +14,7 @@ public class InertiaResponseFactory
 {
     private readonly InertiaOptions _options;
     private readonly IInertiaFlashService _flashService;
+    private readonly ISsrGateway? _ssrGateway;
     private string _rootView;
     private readonly Dictionary<string, object?> _sharedProps = new();
     private string? _version;
@@ -23,10 +25,14 @@ public class InertiaResponseFactory
     /// <summary>
     /// Initializes a new instance of <see cref="InertiaResponseFactory"/>.
     /// </summary>
-    public InertiaResponseFactory(IOptions<InertiaOptions> options, IInertiaFlashService flashService)
+    public InertiaResponseFactory(
+        IOptions<InertiaOptions> options,
+        IInertiaFlashService flashService,
+        ISsrGateway? ssrGateway = null)
     {
         _options = options.Value;
         _flashService = flashService;
+        _ssrGateway = ssrGateway;
         _rootView = _options.RootView;
     }
 
@@ -42,6 +48,7 @@ public class InertiaResponseFactory
             rootView: _rootView,
             version: GetVersion(),
             flashService: _flashService,
+            ssrGateway: _ssrGateway,
             encryptHistory: _encryptHistory ?? _options.EncryptHistory,
             clearHistory: _clearHistory,
             preserveFragment: _preserveFragment

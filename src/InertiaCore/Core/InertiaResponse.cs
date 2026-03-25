@@ -1,5 +1,6 @@
 using System.Text.Json;
 using InertiaCore.Constants;
+using InertiaCore.Ssr;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Abstractions;
@@ -29,6 +30,7 @@ public class InertiaResponse : IActionResult, IResult
     internal string? Version { get; }
 
     private readonly IInertiaFlashService? _flashService;
+    private readonly ISsrGateway? _ssrGateway;
     private readonly bool _encryptHistory;
     private readonly bool _clearHistory;
     private readonly bool _preserveFragment;
@@ -44,6 +46,7 @@ public class InertiaResponse : IActionResult, IResult
         string rootView,
         string? version,
         IInertiaFlashService? flashService = null,
+        ISsrGateway? ssrGateway = null,
         bool encryptHistory = false,
         bool clearHistory = false,
         bool preserveFragment = false)
@@ -54,6 +57,7 @@ public class InertiaResponse : IActionResult, IResult
         RootView = rootView;
         Version = version;
         _flashService = flashService;
+        _ssrGateway = ssrGateway;
         _encryptHistory = encryptHistory;
         _clearHistory = clearHistory;
         _preserveFragment = preserveFragment;
@@ -169,10 +173,18 @@ public class InertiaResponse : IActionResult, IResult
                 $"Razor view '{RootView}' not found. Searched locations: {string.Join(", ", viewResult.SearchedLocations)}");
         }
 
+        var ssrResponse = await TrySsrRenderAsync(httpContext, page);
+
         var viewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary())
         {
             ["Page"] = page,
         };
+
+        if (ssrResponse != null)
+        {
+            viewData["InertiaHead"] = ssrResponse.Head;
+            viewData["InertiaBody"] = ssrResponse.Body;
+        }
 
         foreach (var (key, value) in _viewData)
         {
@@ -184,5 +196,24 @@ public class InertiaResponse : IActionResult, IResult
 
         var viewContext = new ViewContext(actionContext, viewResult.View, viewData, tempData, writer, new HtmlHelperOptions());
         await viewResult.View.RenderAsync(viewContext);
+    }
+
+    private async Task<SsrResponse?> TrySsrRenderAsync(
+        HttpContext httpContext,
+        Dictionary<string, object?> page)
+    {
+        if (_ssrGateway == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return await _ssrGateway.RenderAsync(page, httpContext.RequestAborted);
+        }
+        catch
+        {
+            return null;
+        }
     }
 }
