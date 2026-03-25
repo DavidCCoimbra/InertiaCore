@@ -45,7 +45,7 @@ public class InertiaErrorServiceTests
         context.Response.Body.Position = 0;
         var page = await JsonSerializer.DeserializeAsync<JsonElement>(context.Response.Body);
         var propsErrors = page.GetProperty("props").GetProperty("errors");
-        Assert.Equal(0, propsErrors.EnumerateObject().Count());
+        Assert.Empty(propsErrors.EnumerateObject());
     }
 
     [Fact]
