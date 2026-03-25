@@ -11,6 +11,7 @@ import { Link } from '@inertiajs/vue3'
             <Link href="/merge" class="text-blue-600 hover:text-blue-800 hover:underline">Merge</Link>
             <Link href="/flash" class="text-blue-600 hover:text-blue-800 hover:underline">Flash</Link>
             <Link href="/validation" class="text-blue-600 hover:text-blue-800 hover:underline">Validation</Link>
+            <Link href="/scroll" class="text-blue-600 hover:text-blue-800 hover:underline">Scroll</Link>
         </nav>
 
         <slot />
