@@ -88,5 +88,74 @@ public class InertiaStaticHelperTests
         return (factory, accessor);
     }
 
+    // -- Prop factory methods (no initialization required) --
+
+    [Fact]
+    public void Always_works_without_initialization()
+    {
+        var prop = Inertia.Always("hello");
+
+        Assert.IsType<InertiaCore.Props.AlwaysProp<string>>(prop);
+    }
+
+    [Fact]
+    public void Defer_works_without_initialization()
+    {
+        var prop = Inertia.Defer(() => "heavy", group: "analytics");
+
+        Assert.IsType<InertiaCore.Props.DeferProp<string>>(prop);
+        Assert.Equal("analytics", prop.Defer.Group());
+    }
+
+    [Fact]
+    public void Merge_works_without_initialization()
+    {
+        var prop = Inertia.Merge(new[] { 1, 2, 3 });
+
+        Assert.IsType<InertiaCore.Props.MergeProp<int[]>>(prop);
+        Assert.True(prop.Merge.ShouldMerge());
+    }
+
+    [Fact]
+    public void Once_works_without_initialization()
+    {
+        var prop = Inertia.Once(() => "permissions");
+
+        Assert.IsType<InertiaCore.Props.OnceProp<string>>(prop);
+        Assert.True(prop.Once.ShouldResolveOnce());
+    }
+
+    [Fact]
+    public void Optional_works_without_initialization()
+    {
+        var prop = Inertia.Optional(() => "lazy");
+
+        Assert.IsType<InertiaCore.Props.OptionalProp<string>>(prop);
+    }
+
+    [Fact]
+    public void Scroll_works_without_initialization()
+    {
+        var prop = Inertia.Scroll(new[] { "a", "b" });
+
+        Assert.IsType<InertiaCore.Props.ScrollProp<string[]>>(prop);
+    }
+
+    [Fact]
+    public void Non_generic_factory_methods_work_without_initialization()
+    {
+        var always = Inertia.Always((object?)"hello");
+        var defer = Inertia.Defer(() => (object?)"heavy");
+        var merge = Inertia.Merge((object?)new[] { 1 });
+        var once = Inertia.Once(() => (object?)"perms");
+        var optional = Inertia.Optional(() => (object?)"lazy");
+
+        Assert.IsType<InertiaCore.Props.AlwaysProp>(always);
+        Assert.IsType<InertiaCore.Props.DeferProp>(defer);
+        Assert.IsType<InertiaCore.Props.MergeProp>(merge);
+        Assert.IsType<InertiaCore.Props.OnceProp>(once);
+        Assert.IsType<InertiaCore.Props.OptionalProp>(optional);
+    }
+
     private record TestProps(string Name, int Age);
 }
