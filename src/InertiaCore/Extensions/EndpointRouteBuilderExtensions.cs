@@ -1,4 +1,5 @@
 using InertiaCore.Core;
+using InertiaCore.Filters;
 using InertiaCore.Ssr;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -70,5 +71,26 @@ public static class EndpointRouteBuilderExtensions
                 ? Results.Ok(new { status = "healthy" })
                 : Results.Json(new { status = "unhealthy" }, statusCode: 503);
         });
+    }
+
+    /// <summary>
+    /// Adds an Inertia endpoint filter that configures the factory for matched routes.
+    /// Useful for sharing props or setting version on specific route groups.
+    /// </summary>
+    public static RouteHandlerBuilder AddInertiaFilter(
+        this RouteHandlerBuilder builder,
+        Action<IInertiaResponseFactory> configure)
+    {
+        return builder.AddEndpointFilter(new InertiaEndpointFilter(configure));
+    }
+
+    /// <summary>
+    /// Adds an Inertia endpoint filter to a route group.
+    /// </summary>
+    public static RouteGroupBuilder AddInertiaFilter(
+        this RouteGroupBuilder builder,
+        Action<IInertiaResponseFactory> configure)
+    {
+        return builder.AddEndpointFilter(new InertiaEndpointFilter(configure));
     }
 }
