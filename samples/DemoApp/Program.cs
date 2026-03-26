@@ -114,6 +114,8 @@ app.MapGet("/api/health", () => Results.Ok(new { Status = "ok" }));
 
 app.MapInertiaSsrHealthCheck();
 
+app.MapInertia("/about", "About/Index", new { Title = "About Us" });
+
 app.MapMethods("/redirect", new[] { "PUT" }, () => Results.Redirect("/"));
 
 app.Run();
