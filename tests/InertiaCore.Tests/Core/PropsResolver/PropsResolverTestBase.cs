@@ -32,7 +32,7 @@ public abstract class PropsResolverTestBase
 
         if (only != null)
         {
-            context.Request.Headers[InertiaHeaders.PartialOnly] = only;
+            context.Request.Headers[InertiaHeaders.PartialData] = only;
         }
 
         if (except != null)

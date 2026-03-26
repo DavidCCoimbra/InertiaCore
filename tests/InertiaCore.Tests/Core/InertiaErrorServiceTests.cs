@@ -106,6 +106,30 @@ public class InertiaErrorServiceTests
     }
 
     [Fact]
+    public async Task ConsumeErrors_returns_empty_when_no_tempdata_provider()
+    {
+        var httpContext = new DefaultHttpContext();
+        httpContext.RequestServices = new ServiceCollection().BuildServiceProvider();
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext.Returns(httpContext);
+        var service = new InertiaErrorService(httpContextAccessor);
+        var flashService = Substitute.For<IInertiaFlashService>();
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+
+        service.ShareErrors(factory);
+
+        // Render to trigger lazy AlwaysProp resolution
+        var response = factory.Render("Test");
+        var ctx = CreateInertiaHttpContext();
+        await response.ExecuteAsync(ctx);
+
+        ctx.Response.Body.Position = 0;
+        var page = await System.Text.Json.JsonSerializer.DeserializeAsync<System.Text.Json.JsonElement>(ctx.Response.Body);
+        var errors = page.GetProperty("props").GetProperty("errors");
+        Assert.Empty(errors.EnumerateObject());
+    }
+
+    [Fact]
     public void Reflash_without_tempdata_provider_does_not_throw()
     {
         var httpContext = new DefaultHttpContext();

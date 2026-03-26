@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInertia(options =>
 {
     options.Version = "1.0.0";
+    options.Ssr.Enabled = true;
 });
 #if HAS_VITE
 builder.Services.AddVite(options =>
@@ -25,11 +26,11 @@ app.UseStaticFiles();
 app.UseInertia();
 
 // Simple page — anonymous object props
-app.MapGet("/", (InertiaResponseFactory inertia) =>
+app.MapGet("/", (IInertiaResponseFactory inertia) =>
     inertia.Render("Home/Index", new { Greeting = "Hello from Inertia!" }));
 
 // All prop types — dictionary props
-app.MapGet("/dashboard", (InertiaResponseFactory inertia) =>
+app.MapGet("/dashboard", (IInertiaResponseFactory inertia) =>
     inertia.Render("Dashboard/Index", new Dictionary<string, object?>
     {
         ["user"] = InertiaResponseFactory.Always("Alice"),
@@ -40,7 +41,7 @@ app.MapGet("/dashboard", (InertiaResponseFactory inertia) =>
     }));
 
 // Shared props — demonstrate Share + ShareOnce
-app.MapGet("/shared", (InertiaResponseFactory inertia) =>
+app.MapGet("/shared", (IInertiaResponseFactory inertia) =>
 {
     inertia.Share("appName", "InertiaCore DemoApp");
     inertia.Share("timestamp", DateTimeOffset.UtcNow.ToString("o"));
@@ -49,7 +50,7 @@ app.MapGet("/shared", (InertiaResponseFactory inertia) =>
 });
 
 // Merge strategies — deep merge, append, prepend
-app.MapGet("/merge", (InertiaResponseFactory inertia) =>
+app.MapGet("/merge", (IInertiaResponseFactory inertia) =>
     inertia.Render("Merge/Index", new Dictionary<string, object?>
     {
         ["appendList"] = InertiaResponseFactory.Merge(new[] { "item-1", "item-2", "item-3" }),
@@ -57,10 +58,10 @@ app.MapGet("/merge", (InertiaResponseFactory inertia) =>
     }));
 
 // Flash data — form submit with redirect
-app.MapGet("/flash", (InertiaResponseFactory inertia) =>
+app.MapGet("/flash", (IInertiaResponseFactory inertia) =>
     inertia.Render("Flash/Index"));
 
-app.MapPost("/flash", (InertiaResponseFactory inertia) =>
+app.MapPost("/flash", (IInertiaResponseFactory inertia) =>
 {
     inertia.Flash("success", "Form submitted successfully!");
     inertia.Flash("timestamp", DateTimeOffset.UtcNow.ToString("T"));
@@ -68,10 +69,10 @@ app.MapPost("/flash", (InertiaResponseFactory inertia) =>
 });
 
 // Validation errors — simulated form validation
-app.MapGet("/validation", (InertiaResponseFactory inertia) =>
+app.MapGet("/validation", (IInertiaResponseFactory inertia) =>
     inertia.Render("Validation/Index"));
 
-app.MapPost("/validation", (HttpContext context, InertiaResponseFactory inertia) =>
+app.MapPost("/validation", (HttpContext context, IInertiaResponseFactory inertia) =>
 {
     // Simulate validation failure by storing errors in TempData
     var errors = new Dictionary<string, string>
@@ -87,7 +88,7 @@ app.MapPost("/validation", (HttpContext context, InertiaResponseFactory inertia)
 });
 
 // Scroll prop — infinite scroll / pagination demo
-app.MapGet("/scroll", (InertiaResponseFactory inertia, HttpContext context) =>
+app.MapGet("/scroll", (IInertiaResponseFactory inertia, HttpContext context) =>
 {
     var page = int.TryParse(context.Request.Query["page"], out var p) ? p : 1;
     var pageSize = 5;
@@ -110,6 +111,8 @@ app.MapGet("/scroll", (InertiaResponseFactory inertia, HttpContext context) =>
 });
 
 app.MapGet("/api/health", () => Results.Ok(new { Status = "ok" }));
+
+app.MapInertiaSsrHealthCheck();
 
 app.MapMethods("/redirect", new[] { "PUT" }, () => Results.Redirect("/"));
 

@@ -3,7 +3,7 @@ namespace InertiaCore.Props.Behaviors;
 /// <summary>
 /// Configuration for merge behavior, including deep merge, prepend, and match strategies.
 /// </summary>
-public class MergeBehavior
+public sealed class MergeBehavior
 {
     private bool _merge;
     private bool _deepMerge;
@@ -44,14 +44,14 @@ public class MergeBehavior
     /// <summary>
     /// Whether merge appends at the root level (default behavior).
     /// </summary>
-    public bool AppendsAtRoot() => _merge && _append
+    public bool ShouldAppendAtRoot() => _merge && _append
         && _appendsAtPaths.Count == 0 && _prependsAtPaths.Count == 0
         && !_deepMerge;
 
     /// <summary>
     /// Whether merge prepends at the root level.
     /// </summary>
-    public bool PrependsAtRoot() => _merge && !_append
+    public bool ShouldPrependAtRoot() => _merge && !_append
         && _appendsAtPaths.Count == 0 && _prependsAtPaths.Count == 0
         && !_deepMerge;
 

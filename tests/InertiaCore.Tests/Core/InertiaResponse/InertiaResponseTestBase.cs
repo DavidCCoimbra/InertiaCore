@@ -16,13 +16,16 @@ public abstract class InertiaResponseTestBase
         string? version = null,
         IInertiaFlashService? flashService = null)
     {
+        var context = new InertiaResponseContext(
+            RootView: rootView,
+            Version: version,
+            FlashService: flashService);
+
         return new InertiaCore.Core.InertiaResponse(
             component: component,
             props: props ?? new Dictionary<string, object?>(),
             sharedProps: sharedProps ?? new Dictionary<string, object?>(),
-            rootView: rootView,
-            version: version,
-            flashService: flashService);
+            context: context);
     }
 
     protected static DefaultHttpContext CreateInertiaHttpContext(string path = "/", string? queryString = null)

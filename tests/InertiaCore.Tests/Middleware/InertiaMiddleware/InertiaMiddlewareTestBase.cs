@@ -40,7 +40,7 @@ public abstract class InertiaMiddlewareTestBase
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddScoped<IInertiaFlashService, InertiaFlashService>();
         services.AddScoped<IInertiaErrorService, InertiaErrorService>();
-        services.AddScoped<InertiaResponseFactory>();
+        services.AddScoped<IInertiaResponseFactory, InertiaResponseFactory>();
         context.RequestServices = services.BuildServiceProvider();
 
         return context;

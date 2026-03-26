@@ -9,12 +9,9 @@ namespace InertiaCore.Ssr;
 /// <summary>
 /// HTTP implementation of <see cref="ISsrGateway"/> that communicates with a Node.js SSR sidecar.
 /// </summary>
-public partial class HttpSsrGateway : ISsrGateway
+public sealed partial class HttpSsrGateway : ISsrGateway
 {
-    private static readonly JsonSerializerOptions s_jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
+    private static readonly JsonSerializerOptions s_jsonOptions = Constants.InertiaJsonOptions.CamelCase;
 
     private readonly HttpClient _httpClient;
     private readonly SsrOptions _ssrOptions;
@@ -120,7 +117,15 @@ public partial class HttpSsrGateway : ISsrGateway
         Dictionary<string, object?>? page = null)
     {
         LogSsrWarning(_logger, message, exception);
+        PublishErrorEvent(errorType, message, exception, page);
+        ThrowIfConfigured(errorType, message, exception);
 
+        return null;
+    }
+
+    private void PublishErrorEvent(
+        SsrErrorType errorType, string message, Exception? exception, Dictionary<string, object?>? page)
+    {
         _onRenderFailed?.Invoke(new SsrRenderFailed
         {
             ErrorType = errorType,
@@ -128,15 +133,18 @@ public partial class HttpSsrGateway : ISsrGateway
             Exception = exception,
             Page = page,
         });
+    }
 
-        if (_ssrOptions.ThrowOnError)
+    private void ThrowIfConfigured(SsrErrorType errorType, string message, Exception? exception)
+    {
+        if (!_ssrOptions.ThrowOnError)
         {
-            throw exception != null
-                ? new SsrException(errorType, message, exception)
-                : new SsrException(errorType, message);
+            return;
         }
 
-        return null;
+        throw exception != null
+            ? new SsrException(errorType, message, exception)
+            : new SsrException(errorType, message);
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "SSR: {Message}")]

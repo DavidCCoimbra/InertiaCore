@@ -3,14 +3,13 @@ using InertiaCore.Constants;
 using InertiaCore.Props;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace InertiaCore.Core;
 
 /// <summary>
 /// Scoped service for managing validation errors that persist through one redirect via TempData.
 /// </summary>
-public class InertiaErrorService : IInertiaErrorService
+public sealed class InertiaErrorService : IInertiaErrorService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
 
@@ -23,7 +22,7 @@ public class InertiaErrorService : IInertiaErrorService
     }
 
     /// <inheritdoc />
-    public void ShareErrors(InertiaResponseFactory factory)
+    public void ShareErrors(IInertiaResponseFactory factory)
     {
         var httpContext = _httpContextAccessor.HttpContext;
         if (httpContext == null)
@@ -68,15 +67,6 @@ public class InertiaErrorService : IInertiaErrorService
         return JsonSerializer.Deserialize<Dictionary<string, object?>>(json) ?? new();
     }
 
-    private ITempDataDictionary? GetTempData()
-    {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext == null)
-        {
-            return null;
-        }
-
-        var tempDataFactory = httpContext.RequestServices.GetService<ITempDataDictionaryFactory>();
-        return tempDataFactory?.GetTempData(httpContext);
-    }
+    private ITempDataDictionary? GetTempData() =>
+        TempDataAccessor.GetTempData(_httpContextAccessor);
 }

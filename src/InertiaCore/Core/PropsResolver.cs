@@ -10,26 +10,16 @@ namespace InertiaCore.Core;
 /// Resolves the props tree by merging shared and page props, filtering by partial reload
 /// headers, resolving IInertiaProp instances and closures, and collecting metadata.
 /// </summary>
-public class PropsResolver
+public sealed class PropsResolver
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly HttpRequest? _request;
     private readonly HttpContext? _httpContext;
     private readonly string? _component;
 
     private readonly bool _isPartial;
-    private readonly HashSet<string> _only;
-    private readonly HashSet<string> _except;
+    private readonly PropsPathMatcher _pathMatcher;
     private readonly HashSet<string> _resetProps;
-    private readonly HashSet<string> _loadedOnceProps;
-
-    private readonly List<string> _sharedPropKeys = [];
-    private readonly Dictionary<string, List<string>> _deferredProps = [];
-    private readonly List<string> _mergeProps = [];
-    private readonly List<string> _deepMergeProps = [];
-    private readonly List<string> _prependProps = [];
-    private readonly List<string> _matchPropsOn = [];
-    private readonly Dictionary<string, object?> _onceProps = [];
+    private readonly PropMetadataCollector _metadata = new();
 
     /// <summary>
     /// Creates a resolver without HTTP context (for unit testing and non-HTTP scenarios).
@@ -45,17 +35,16 @@ public class PropsResolver
     public PropsResolver(IServiceProvider serviceProvider, HttpRequest? request, string? component)
     {
         _serviceProvider = serviceProvider;
-        _request = request;
         _httpContext = request?.HttpContext;
         _component = component;
 
         var partialComponent = request?.Headers[InertiaHeaders.PartialComponent].FirstOrDefault();
         _isPartial = !string.IsNullOrEmpty(partialComponent) && partialComponent == component;
 
-        _only = ParseHeader(InertiaHeaders.PartialOnly);
-        _except = ParseHeader(InertiaHeaders.PartialExcept);
-        _resetProps = ParseHeader(InertiaHeaders.Reset);
-        _loadedOnceProps = ParseHeader(InertiaHeaders.ExceptOnceProps);
+        _pathMatcher = new PropsPathMatcher(
+            PropsPathMatcher.ParseHeader(request, InertiaHeaders.PartialData),
+            PropsPathMatcher.ParseHeader(request, InertiaHeaders.PartialExcept));
+        _resetProps = PropsPathMatcher.ParseHeader(request, InertiaHeaders.Reset);
     }
 
     /// <summary>
@@ -67,7 +56,7 @@ public class PropsResolver
         Dictionary<string, object?> pageProps)
     {
         var merged = new Dictionary<string, object?>(sharedProps);
-        _sharedPropKeys.AddRange(sharedProps.Keys);
+        _metadata.TrackSharedKeys(sharedProps.Keys);
 
         foreach (var (key, value) in pageProps)
         {
@@ -77,8 +66,8 @@ public class PropsResolver
         merged = ResolveProviders(merged);
         merged = ExpandDotNotation(merged);
 
-        var resolved = await ResolvePropsAsync(merged, prefix: "");
-        return (resolved, BuildMetadata());
+        var resolved = await ResolvePropsAsync(merged, prefix: "").ConfigureAwait(false);
+        return (resolved, _metadata.Build());
     }
 
     private async Task<Dictionary<string, object?>> ResolvePropsAsync(
@@ -101,7 +90,7 @@ public class PropsResolver
                 continue;
             }
 
-            resolved[key] = await ResolveValueAsync(path, value);
+            resolved[key] = await ResolveValueAsync(path, value).ConfigureAwait(false);
         }
 
         return resolved;
@@ -119,14 +108,14 @@ public class PropsResolver
             return true;
         }
 
-        if (_only.Count > 0)
+        if (_pathMatcher.HasOnlyFilter)
         {
-            return MatchesOnly(path) || LeadsToOnly(path);
+            return _pathMatcher.MatchesOnly(path) || _pathMatcher.LeadsToOnly(path);
         }
 
-        if (_except.Count > 0)
+        if (_pathMatcher.HasExceptFilter)
         {
-            return !MatchesExcept(path);
+            return !_pathMatcher.MatchesExcept(path);
         }
 
         return true;
@@ -152,20 +141,12 @@ public class PropsResolver
     {
         if (value is IDeferrable deferrable && deferrable.Defer.ShouldDefer())
         {
-            var group = deferrable.Defer.Group();
-
-            if (!_deferredProps.TryGetValue(group, out var groupList))
-            {
-                groupList = [];
-                _deferredProps[group] = groupList;
-            }
-
-            groupList.Add(path);
+            _metadata.AddDeferred(deferrable.Defer.Group(), path);
 
             if (value is IMergeable mergeable && mergeable.Merge.ShouldMerge()
                 && !_resetProps.Contains(path))
             {
-                _mergeProps.Add(path);
+                _metadata.AddMerge(path);
             }
         }
 
@@ -192,21 +173,21 @@ public class PropsResolver
 
         if (mergeable.Merge.ShouldDeepMerge())
         {
-            _deepMergeProps.Add(path);
+            _metadata.AddDeepMerge(path);
         }
-        else if (mergeable.Merge.PrependsAtRoot())
+        else if (mergeable.Merge.ShouldPrependAtRoot())
         {
-            _prependProps.Add(path);
+            _metadata.AddPrepend(path);
         }
         else
         {
-            _mergeProps.Add(path);
+            _metadata.AddMerge(path);
         }
 
         var matchesOn = mergeable.Merge.MatchesOn();
         if (matchesOn.Length > 0)
         {
-            _matchPropsOn.AddRange(matchesOn);
+            _metadata.AddMatchOn(matchesOn);
         }
     }
 
@@ -222,24 +203,20 @@ public class PropsResolver
             return;
         }
 
-        _onceProps[path] = new Dictionary<string, object?>
-        {
-            ["prop"] = path,
-            ["expiresAt"] = onceable.Once.ExpiresAt(),
-        };
+        _metadata.AddOnce(path, onceable.Once.ExpiresAt());
     }
 
     private async Task<object?> ResolveValueAsync(string path, object? value)
     {
-        var resolved = await ResolveRawValueAsync(value, path);
+        var resolved = await ResolveRawValueAsync(value, path).ConfigureAwait(false);
 
-        resolved = await UnwrapNestedPropAsync(path, value, resolved);
+        resolved = await UnwrapNestedPropAsync(path, value, resolved).ConfigureAwait(false);
 
         CollectMetadata(path, value);
 
         if (resolved is Dictionary<string, object?> resolvedDict && value is not Dictionary<string, object?>)
         {
-            return await ResolvePropsAsync(resolvedDict, path);
+            return await ResolvePropsAsync(resolvedDict, path).ConfigureAwait(false);
         }
 
         return resolved;
@@ -274,49 +251,7 @@ public class PropsResolver
             return null;
         }
 
-        return await nestedProp.ResolveAsync(_serviceProvider);
-    }
-
-    private Dictionary<string, object?> BuildMetadata()
-    {
-        var metadata = new Dictionary<string, object?>();
-
-        if (_deferredProps.Count > 0)
-        {
-            metadata["deferredProps"] = _deferredProps;
-        }
-
-        if (_mergeProps.Count > 0)
-        {
-            metadata["mergeProps"] = _mergeProps;
-        }
-
-        if (_deepMergeProps.Count > 0)
-        {
-            metadata["deepMergeProps"] = _deepMergeProps;
-        }
-
-        if (_prependProps.Count > 0)
-        {
-            metadata["prependProps"] = _prependProps;
-        }
-
-        if (_matchPropsOn.Count > 0)
-        {
-            metadata["matchPropsOn"] = _matchPropsOn;
-        }
-
-        if (_onceProps.Count > 0)
-        {
-            metadata["onceProps"] = _onceProps;
-        }
-
-        if (_sharedPropKeys.Count > 0)
-        {
-            metadata["sharedProps"] = _sharedPropKeys;
-        }
-
-        return metadata;
+        return await nestedProp.ResolveAsync(_serviceProvider).ConfigureAwait(false);
     }
 
     // -- Providers and dot-notation --
@@ -383,36 +318,5 @@ public class PropsResolver
         }
 
         current[segments[^1]] = value;
-    }
-
-    // -- Partial reload matching --
-
-    private bool MatchesOnly(string path)
-    {
-        return _only.Any(only =>
-            path == only || path.StartsWith($"{only}.", StringComparison.Ordinal));
-    }
-
-    private bool LeadsToOnly(string path)
-    {
-        return _only.Any(only =>
-            only.StartsWith($"{path}.", StringComparison.Ordinal));
-    }
-
-    private bool MatchesExcept(string path)
-    {
-        return _except.Any(except =>
-            path == except || path.StartsWith($"{except}.", StringComparison.Ordinal));
-    }
-
-    private HashSet<string> ParseHeader(string headerName)
-    {
-        var value = _request?.Headers[headerName].FirstOrDefault();
-        if (string.IsNullOrEmpty(value))
-        {
-            return [];
-        }
-
-        return [.. value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)];
     }
 }

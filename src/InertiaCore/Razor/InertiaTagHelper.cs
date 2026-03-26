@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Web;
+using InertiaCore.Constants;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
@@ -12,10 +13,7 @@ namespace InertiaCore.Razor;
 [HtmlTargetElement("inertia", TagStructure = TagStructure.WithoutEndTag)]
 public class InertiaTagHelper : TagHelper
 {
-    private static readonly JsonSerializerOptions s_jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
+    private static readonly JsonSerializerOptions s_jsonOptions = InertiaJsonOptions.CamelCase;
 
     /// <summary>
     /// The id attribute for the root div element.
@@ -43,6 +41,14 @@ public class InertiaTagHelper : TagHelper
 
         output.TagName = null;
 
+        // SSR: the sidecar returns the full div with data-page and rendered content
+        if (ViewContext.ViewData["InertiaBody"] is string ssrBody)
+        {
+            output.Content.SetHtmlContent(ssrBody);
+            return;
+        }
+
+        // CSR: empty div with data-page attribute for client-side rendering
         var json = JsonSerializer.Serialize(page, s_jsonOptions);
         var encoded = HttpUtility.HtmlAttributeEncode(json);
         output.Content.SetHtmlContent($"<div id=\"{Id}\" data-page=\"{encoded}\"></div>");

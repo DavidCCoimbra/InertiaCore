@@ -8,12 +8,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>InertiaCore DemoApp</title>
     <inertia-head />
+    <environment exclude="Testing">
+        <vite-scripts />
+    </environment>
 </head>
 <body>
     <inertia />
-
-    <environment include="Development">
-        <vite-scripts />
-    </environment>
 </body>
 </html>

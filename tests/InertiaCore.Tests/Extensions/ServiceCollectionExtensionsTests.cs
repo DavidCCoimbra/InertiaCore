@@ -17,7 +17,7 @@ public class ServiceCollectionExtensionsTests
 
         services.AddInertia();
 
-        var descriptor = services.Single(s => s.ServiceType == typeof(InertiaResponseFactory));
+        var descriptor = services.Single(s => s.ServiceType == typeof(IInertiaResponseFactory));
         Assert.Equal(ServiceLifetime.Scoped, descriptor.Lifetime);
     }
 
@@ -117,8 +117,8 @@ public class ServiceCollectionExtensionsTests
 
         using var scope1 = provider.CreateScope();
         using var scope2 = provider.CreateScope();
-        var factory1 = scope1.ServiceProvider.GetRequiredService<InertiaResponseFactory>();
-        var factory2 = scope2.ServiceProvider.GetRequiredService<InertiaResponseFactory>();
+        var factory1 = scope1.ServiceProvider.GetRequiredService<IInertiaResponseFactory>();
+        var factory2 = scope2.ServiceProvider.GetRequiredService<IInertiaResponseFactory>();
 
         Assert.NotSame(factory1, factory2);
     }

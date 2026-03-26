@@ -39,7 +39,7 @@ public static class InertiaHeaders
     /// <summary>
     /// Header specifying which props to include in partial reloads.
     /// </summary>
-    public const string PartialOnly = "X-Inertia-Partial-Data";
+    public const string PartialData = "X-Inertia-Partial-Data";
 
     /// <summary>
     /// Header specifying which props to exclude from partial reloads.

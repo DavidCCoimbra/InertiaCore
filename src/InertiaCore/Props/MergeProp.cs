@@ -6,7 +6,7 @@ namespace InertiaCore.Props;
 /// <summary>
 /// A prop that merges with existing client-side data instead of replacing it.
 /// </summary>
-public class MergeProp : IInertiaProp, IMergeable, IOnceable
+public sealed class MergeProp : IInertiaProp, IMergeable, IOnceable
 {
     private readonly object? _value;
     private readonly MergeBehavior _merge = new();
@@ -54,17 +54,8 @@ public class MergeProp : IInertiaProp, IMergeable, IOnceable
     }
 
     /// <inheritdoc />
-    public async Task<object?> ResolveAsync(IServiceProvider services)
-    {
-        return _value switch
-        {
-            Func<IServiceProvider, Task<object?>> f => await f(services),
-            Func<IServiceProvider, object?> f => f(services),
-            Func<Task<object?>> f => await f(),
-            Func<object?> f => f(),
-            _ => _value,
-        };
-    }
+    public Task<object?> ResolveAsync(IServiceProvider services) =>
+        PropValueResolver.ResolveAsync(_value, services);
 
     /// <summary>
     /// The merge configuration for this prop.

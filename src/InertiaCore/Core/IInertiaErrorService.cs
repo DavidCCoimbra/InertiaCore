@@ -9,7 +9,7 @@ public interface IInertiaErrorService
     /// Shares validation errors as an AlwaysProp on the given factory.
     /// Called by middleware before the request executes.
     /// </summary>
-    void ShareErrors(InertiaResponseFactory factory);
+    void ShareErrors(IInertiaResponseFactory factory);
 
     /// <summary>
     /// Keeps validation errors alive through a redirect.

@@ -19,8 +19,4 @@
     <DefineConstants>$(DefineConstants);HAS_VITE</DefineConstants>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="wwwroot\" />
-  </ItemGroup>
-
 </Project>

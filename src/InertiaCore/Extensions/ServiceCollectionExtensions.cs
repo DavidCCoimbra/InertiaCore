@@ -1,7 +1,9 @@
 using InertiaCore.Configuration;
 using InertiaCore.Core;
 using InertiaCore.Middleware;
+using InertiaCore.Ssr;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace InertiaCore.Extensions;
 
@@ -18,12 +20,14 @@ public static class ServiceCollectionExtensions
         Action<InertiaOptions>? configure = null)
     {
         services.Configure(configure ?? (_ => { }));
+        services.AddSingleton<IValidateOptions<InertiaOptions>, InertiaOptionsValidator>();
         services.AddHttpContextAccessor();
         services.AddScoped<IInertiaFlashService, InertiaFlashService>();
         services.AddScoped<IInertiaErrorService, InertiaErrorService>();
-        services.AddScoped<InertiaResponseFactory>();
+        services.AddScoped<IInertiaResponseFactory, InertiaResponseFactory>();
         services.AddSingleton<InertiaMiddleware>();
         services.AddSingleton<EncryptHistoryMiddleware>();
+        services.AddHttpClient<ISsrGateway, HttpSsrGateway>();
 
         return services;
     }

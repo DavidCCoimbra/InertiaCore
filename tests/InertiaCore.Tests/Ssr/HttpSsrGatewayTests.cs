@@ -113,6 +113,68 @@ public class HttpSsrGatewayTests
     }
 
     [Fact]
+    public async Task RenderAsync_throws_on_invalid_json_when_throw_enabled()
+    {
+        var handler = new FakeHttpHandler(HttpStatusCode.OK, "not-json");
+        var gateway = CreateGateway(handler: handler, throwOnError: true);
+
+        var ex = await Assert.ThrowsAsync<SsrException>(
+            () => gateway.RenderAsync(new Dictionary<string, object?>()));
+
+        Assert.Equal(SsrErrorType.InvalidResponse, ex.ErrorType);
+        Assert.NotNull(ex.InnerException);
+    }
+
+    [Fact]
+    public async Task RenderAsync_returns_null_on_null_response_body()
+    {
+        var handler = new FakeHttpHandler(HttpStatusCode.OK, "null");
+        var gateway = CreateGateway(handler: handler);
+
+        var result = await gateway.RenderAsync(new Dictionary<string, object?>());
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RenderAsync_throws_on_null_response_when_throw_enabled()
+    {
+        var handler = new FakeHttpHandler(HttpStatusCode.OK, "null");
+        var gateway = CreateGateway(handler: handler, throwOnError: true);
+
+        var ex = await Assert.ThrowsAsync<SsrException>(
+            () => gateway.RenderAsync(new Dictionary<string, object?>()));
+
+        Assert.Equal(SsrErrorType.InvalidResponse, ex.ErrorType);
+        Assert.Null(ex.InnerException);
+    }
+
+    [Fact]
+    public async Task RenderAsync_returns_null_on_cancellation()
+    {
+        var handler = new FakeHttpHandler(
+            exception: new TaskCanceledException("cancelled"));
+        var gateway = CreateGateway(handler: handler);
+
+        var result = await gateway.RenderAsync(new Dictionary<string, object?>());
+
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task RenderAsync_returns_null_on_timeout()
+    {
+        var handler = new FakeHttpHandler(
+            exception: new TaskCanceledException("timeout",
+                new TimeoutException("timed out")));
+        var gateway = CreateGateway(handler: handler);
+
+        var result = await gateway.RenderAsync(new Dictionary<string, object?>());
+
+        Assert.Null(result);
+    }
+
+    [Fact]
     public async Task RenderAsync_invokes_onRenderFailed_callback()
     {
         var handler = new FakeHttpHandler(HttpStatusCode.InternalServerError, "");

@@ -80,7 +80,7 @@ public class PartialReloadIntegrationTests : IClassFixture<TestWebAppFactory>
         request.Headers.Add(InertiaHeaders.Inertia, "true");
         request.Headers.Add(InertiaHeaders.Version, "1.0.0");
         request.Headers.Add(InertiaHeaders.PartialComponent, "Dashboard/Index");
-        request.Headers.Add(InertiaHeaders.PartialOnly, "lazy");
+        request.Headers.Add(InertiaHeaders.PartialData, "lazy");
 
         var response = await _client.SendAsync(request);
 
@@ -105,7 +105,7 @@ public class PartialReloadIntegrationTests : IClassFixture<TestWebAppFactory>
         request.Headers.Add(InertiaHeaders.Inertia, "true");
         request.Headers.Add(InertiaHeaders.Version, "1.0.0");
         request.Headers.Add(InertiaHeaders.PartialComponent, "Dashboard/Index");
-        request.Headers.Add(InertiaHeaders.PartialOnly, "stats");
+        request.Headers.Add(InertiaHeaders.PartialData, "stats");
 
         var response = await _client.SendAsync(request);
 
