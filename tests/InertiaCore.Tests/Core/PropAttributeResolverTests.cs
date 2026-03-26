@@ -429,16 +429,16 @@ public class PropAttributeResolverTests
     // -- Test records: valid stacking --
 
     private record DeferMergeProps(
-        [property: InertiaDefer] [property: InertiaMerge] string Stats);
+        [property: InertiaDefer][property: InertiaMerge] string Stats);
 
     private record DeferDeepMergeProps(
-        [property: InertiaDefer] [property: InertiaMerge(Deep = true)] string Stats);
+        [property: InertiaDefer][property: InertiaMerge(Deep = true)] string Stats);
 
     private record DeferPrependProps(
-        [property: InertiaDefer] [property: InertiaMerge(Prepend = true)] string Items);
+        [property: InertiaDefer][property: InertiaMerge(Prepend = true)] string Items);
 
     private record DeferOnceProps(
-        [property: InertiaDefer] [property: InertiaOnce] string Stats);
+        [property: InertiaDefer][property: InertiaOnce] string Stats);
 
     private record DeferMergeOnceProps(
         [property: InertiaDefer(Group = "analytics")]
@@ -446,30 +446,30 @@ public class PropAttributeResolverTests
         [property: InertiaOnce(TtlSeconds = 3600)] string Stats);
 
     private record MergeOnceProps(
-        [property: InertiaMerge] [property: InertiaOnce] int[] Items);
+        [property: InertiaMerge][property: InertiaOnce] int[] Items);
 
     private record OptionalOnceProps(
-        [property: InertiaOptional] [property: InertiaOnce] string Activity);
+        [property: InertiaOptional][property: InertiaOnce] string Activity);
 
     // -- Test records: invalid combos --
 
     private record AlwaysDeferProps(
-        [property: InertiaAlways] [property: InertiaDefer] string Data);
+        [property: InertiaAlways][property: InertiaDefer] string Data);
 
     private record AlwaysMergeProps(
-        [property: InertiaAlways] [property: InertiaMerge] string Data);
+        [property: InertiaAlways][property: InertiaMerge] string Data);
 
     private record AlwaysOnceProps(
-        [property: InertiaAlways] [property: InertiaOnce] string Data);
+        [property: InertiaAlways][property: InertiaOnce] string Data);
 
     private record DeferOptionalProps(
-        [property: InertiaDefer] [property: InertiaOptional] string Data);
+        [property: InertiaDefer][property: InertiaOptional] string Data);
 
     private record OptionalMergeProps(
-        [property: InertiaOptional] [property: InertiaMerge] string Data);
+        [property: InertiaOptional][property: InertiaMerge] string Data);
 
     private record OnceMergeProps(
-        [property: InertiaOnce] [property: InertiaMerge] string Data);
+        [property: InertiaOnce][property: InertiaMerge] string Data);
 
     // -- Test records: edge cases --
 

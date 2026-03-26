@@ -93,4 +93,21 @@ public static class EndpointRouteBuilderExtensions
     {
         return builder.AddEndpointFilter(new InertiaEndpointFilter(configure));
     }
+
+    /// <summary>
+    /// Adds automatic validation to this endpoint. If validation fails on an Inertia request,
+    /// redirects back with errors. Non-Inertia requests get standard ValidationProblem responses.
+    /// </summary>
+    public static RouteHandlerBuilder AddInertiaValidation(this RouteHandlerBuilder builder)
+    {
+        return builder.AddEndpointFilter<InertiaValidationFilter>();
+    }
+
+    /// <summary>
+    /// Adds automatic validation to all endpoints in this route group.
+    /// </summary>
+    public static RouteGroupBuilder AddInertiaValidation(this RouteGroupBuilder builder)
+    {
+        return builder.AddEndpointFilter<InertiaValidationFilter>();
+    }
 }

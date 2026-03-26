@@ -31,6 +31,12 @@ public class InertiaOptions
     public bool EncryptHistory { get; set; }
 
     /// <summary>
+    /// Enables automatic validation error handling for MVC controllers.
+    /// When enabled, Inertia requests with invalid ModelState auto-redirect with errors.
+    /// </summary>
+    public bool AutoValidation { get; set; }
+
+    /// <summary>
     /// Server-side rendering configuration.
     /// </summary>
     public SsrOptions Ssr { get; set; } = new();

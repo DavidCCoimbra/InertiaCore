@@ -1,8 +1,10 @@
 using InertiaCore.Configuration;
 using InertiaCore.Core;
+using InertiaCore.Filters;
 using InertiaCore.Middleware;
 using InertiaCore.Ssr;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
@@ -30,6 +32,19 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<InertiaMiddleware>();
         services.AddSingleton<EncryptHistoryMiddleware>();
         services.AddHttpClient<ISsrGateway, HttpSsrGateway>();
+
+        // Auto-validation: register MVC filter that redirects Inertia requests with errors
+        services.AddTransient<IConfigureOptions<MvcOptions>>(sp =>
+        {
+            var options = sp.GetRequiredService<IOptions<InertiaOptions>>().Value;
+            return new ConfigureOptions<MvcOptions>(mvc =>
+            {
+                if (options.AutoValidation)
+                {
+                    mvc.Filters.Add<InertiaValidationActionFilter>();
+                }
+            });
+        });
 
         return services;
     }
