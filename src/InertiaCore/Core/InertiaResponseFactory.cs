@@ -1,4 +1,3 @@
-using System.Reflection;
 using InertiaCore.Configuration;
 using InertiaCore.Contracts;
 using InertiaCore.Props;
@@ -353,15 +352,6 @@ public class InertiaResponseFactory : IInertiaResponseFactory
     public void ShareOnce(string key, Func<Task<object?>> callback) =>
         _sharedProps[key] = new OnceProp(callback);
 
-    private static Dictionary<string, object?> ConvertToPropsDict(object props)
-    {
-        var dict = new Dictionary<string, object?>();
-
-        foreach (var property in props.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            dict[property.Name] = property.GetValue(props);
-        }
-
-        return dict;
-    }
+    private static Dictionary<string, object?> ConvertToPropsDict(object props) =>
+        PropAttributeResolver.ConvertToPropsDict(props);
 }
