@@ -46,6 +46,20 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Registers typed shared props using a factory delegate. Inertia attributes on the props type
+    /// are respected (e.g. [InertiaAlways], [InertiaOnce]).
+    /// </summary>
+    public static IServiceCollection AddInertiaSharedProps<TProps>(
+        this IServiceCollection services,
+        Func<HttpContext, TProps> factory)
+        where TProps : class
+    {
+        services.AddScoped<Contracts.ISharedPropsProvider>(
+            _ => new TypedSharedPropsProvider<TProps>(factory));
+        return services;
+    }
+
+    /// <summary>
     /// Adds a health check for the Inertia SSR sidecar.
     /// </summary>
     public static IHealthChecksBuilder AddInertiaSsrCheck(
