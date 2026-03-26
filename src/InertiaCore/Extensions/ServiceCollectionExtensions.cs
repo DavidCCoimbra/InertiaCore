@@ -4,6 +4,7 @@ using InertiaCore.Middleware;
 using InertiaCore.Ssr;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
 
 namespace InertiaCore.Extensions;
@@ -42,6 +43,21 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<Contracts.ISharedPropsProvider, TProvider>();
         return services;
+    }
+
+    /// <summary>
+    /// Adds a health check for the Inertia SSR sidecar.
+    /// </summary>
+    public static IHealthChecksBuilder AddInertiaSsrCheck(
+        this IHealthChecksBuilder builder,
+        string name = "inertia-ssr",
+        HealthStatus? failureStatus = null,
+        IEnumerable<string>? tags = null)
+    {
+        return builder.AddCheck<InertiaSsrHealthCheck>(
+            name,
+            failureStatus ?? HealthStatus.Degraded,
+            tags ?? ["inertia", "ssr"]);
     }
 
     /// <summary>
