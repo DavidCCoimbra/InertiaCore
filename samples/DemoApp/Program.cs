@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInertia(options =>
 {
     options.Version = "1.0.0";
+    options.Ssr.Enabled = true;
 });
 #if HAS_VITE
 builder.Services.AddVite(options =>

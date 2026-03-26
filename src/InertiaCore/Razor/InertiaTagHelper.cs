@@ -43,18 +43,16 @@ public class InertiaTagHelper : TagHelper
 
         output.TagName = null;
 
-        var json = JsonSerializer.Serialize(page, s_jsonOptions);
-        var encoded = HttpUtility.HtmlAttributeEncode(json);
-
-        // SSR: render server-rendered body inside the div, with data-page for hydration
+        // SSR: the sidecar returns the full div with data-page and rendered content
         if (ViewContext.ViewData["InertiaBody"] is string ssrBody)
         {
-            output.Content.SetHtmlContent(
-                $"<div id=\"{Id}\" data-page=\"{encoded}\">{ssrBody}</div>");
+            output.Content.SetHtmlContent(ssrBody);
             return;
         }
 
-        // CSR: empty div with data-page attribute
+        // CSR: empty div with data-page attribute for client-side rendering
+        var json = JsonSerializer.Serialize(page, s_jsonOptions);
+        var encoded = HttpUtility.HtmlAttributeEncode(json);
         output.Content.SetHtmlContent($"<div id=\"{Id}\" data-page=\"{encoded}\"></div>");
     }
 }

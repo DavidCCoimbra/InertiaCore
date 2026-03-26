@@ -16,18 +16,17 @@ namespace InertiaCore.Tests.Razor;
 public class SsrTagHelperTests
 {
     [Fact]
-    public void Renders_ssr_body_when_available()
+    public void Renders_ssr_body_passthrough()
     {
         var page = new Dictionary<string, object?> { ["component"] = "Test" };
-        var tagHelper = CreateTagHelper(page, ssrBody: "<h1>SSR Rendered</h1>");
+        var ssrBody = "<div id=\"app\" data-page=\"{}\"><h1>SSR Rendered</h1></div>";
+        var tagHelper = CreateTagHelper(page, ssrBody: ssrBody);
         var output = CreateOutput();
 
         tagHelper.Process(CreateContext(), output);
 
         var content = output.Content.GetContent();
-        Assert.Contains("SSR Rendered", content);
-        Assert.Contains("data-page=", content);
-        Assert.Contains("<h1>", content);
+        Assert.Equal(ssrBody, content);
     }
 
     [Fact]

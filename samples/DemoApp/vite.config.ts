@@ -9,6 +9,7 @@ export default defineConfig({
         tailwindcss(),
         dotnetVite({
             input: 'ClientApp/app.ts',
+            ssr: 'ClientApp/ssr.ts',
             refresh: true,
         }),
     ],

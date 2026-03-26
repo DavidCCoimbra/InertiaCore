@@ -17,7 +17,7 @@ public class SsrIntegrationTests
         ssrGateway.RenderAsync(Arg.Any<Dictionary<string, object?>>(), Arg.Any<CancellationToken>())
             .Returns(new SsrResponse(
                 Head: "<title>SSR Title</title>",
-                Body: "<h1>Server Rendered</h1>"));
+                Body: "<div id=\"app\" data-page=\"{}\"><h1>Server Rendered</h1></div>"));
 
         await using var factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
