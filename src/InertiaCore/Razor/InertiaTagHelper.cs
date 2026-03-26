@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Web;
+using InertiaCore.Constants;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Razor.TagHelpers;
@@ -12,10 +13,7 @@ namespace InertiaCore.Razor;
 [HtmlTargetElement("inertia", TagStructure = TagStructure.WithoutEndTag)]
 public class InertiaTagHelper : TagHelper
 {
-    private static readonly JsonSerializerOptions s_jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
+    private static readonly JsonSerializerOptions s_jsonOptions = InertiaJsonOptions.CamelCase;
 
     /// <summary>
     /// The id attribute for the root div element.

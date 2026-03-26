@@ -188,7 +188,7 @@ public class ScrollPropTests
 
         prop.ConfigureMergeIntent(context);
 
-        Assert.True(prop.Merge.PrependsAtRoot());
+        Assert.True(prop.Merge.ShouldPrependAtRoot());
     }
 
     [Fact]
@@ -199,7 +199,7 @@ public class ScrollPropTests
 
         prop.ConfigureMergeIntent(context);
 
-        Assert.True(prop.Merge.AppendsAtRoot());
+        Assert.True(prop.Merge.ShouldAppendAtRoot());
     }
 
     // -- Test helpers --

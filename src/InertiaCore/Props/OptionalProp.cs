@@ -6,7 +6,7 @@ namespace InertiaCore.Props;
 /// <summary>
 /// A prop excluded from the initial page load but included when explicitly requested.
 /// </summary>
-public class OptionalProp : IInertiaProp, IIgnoreFirstLoad, IOnceable
+public sealed class OptionalProp : IInertiaProp, IIgnoreFirstLoad, IOnceable
 {
     private readonly Func<IServiceProvider, Task<object?>> _callback;
     private readonly OnceBehavior _once = new();

@@ -9,7 +9,7 @@ namespace InertiaCore.Props;
 /// A prop for infinite scroll patterns with pagination metadata.
 /// Wraps a value in a named key and attaches scroll position metadata.
 /// </summary>
-public class ScrollProp<T> : IInertiaProp, IDeferrable, IMergeable
+public sealed class ScrollProp<T> : IInertiaProp, IDeferrable, IMergeable
 {
     private readonly object? _value;
     private readonly string _wrapper;

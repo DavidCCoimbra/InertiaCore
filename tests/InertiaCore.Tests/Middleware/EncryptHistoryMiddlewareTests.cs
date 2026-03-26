@@ -35,7 +35,7 @@ public class EncryptHistoryMiddlewareTests
 
         await middleware.InvokeAsync(context, _ => Task.CompletedTask);
 
-        var factory = context.RequestServices.GetRequiredService<InertiaResponseFactory>();
+        var factory = context.RequestServices.GetRequiredService<IInertiaResponseFactory>();
         var response = factory.Render("Test");
         var renderContext = new DefaultHttpContext();
         renderContext.Request.Headers["X-Inertia"] = "true";
@@ -56,7 +56,7 @@ public class EncryptHistoryMiddlewareTests
         var services = new ServiceCollection();
         services.AddSingleton(Substitute.For<IInertiaFlashService>());
         services.AddSingleton(Options.Create(new InertiaOptions()));
-        services.AddScoped<InertiaResponseFactory>();
+        services.AddScoped<IInertiaResponseFactory, InertiaResponseFactory>();
         context.RequestServices = services.BuildServiceProvider();
         return context;
     }

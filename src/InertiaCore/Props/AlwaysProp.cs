@@ -5,7 +5,7 @@ namespace InertiaCore.Props;
 /// <summary>
 /// A prop that is always included, even during partial reloads.
 /// </summary>
-public class AlwaysProp : IInertiaProp
+public sealed class AlwaysProp : IInertiaProp
 {
     private readonly object? _value;
 
@@ -50,15 +50,6 @@ public class AlwaysProp : IInertiaProp
     }
 
     /// <inheritdoc />
-    public async Task<object?> ResolveAsync(IServiceProvider services)
-    {
-        return _value switch
-        {
-            Func<IServiceProvider, Task<object?>> f => await f(services),
-            Func<IServiceProvider, object?> f => f(services),
-            Func<Task<object?>> f => await f(),
-            Func<object?> f => f(),
-            _ => _value,
-        };
-    }
+    public Task<object?> ResolveAsync(IServiceProvider services) =>
+        PropValueResolver.ResolveAsync(_value, services);
 }

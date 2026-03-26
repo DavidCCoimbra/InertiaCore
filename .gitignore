@@ -31,3 +31,9 @@ TestResults/
 *.cache
 *.dll
 *.pdb
+
+# Node.js / Vite
+node_modules/
+wwwroot/build/
+wwwroot/hot
+dist/

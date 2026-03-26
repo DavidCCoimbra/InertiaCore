@@ -2,14 +2,13 @@ using System.Text.Json;
 using InertiaCore.Constants;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace InertiaCore.Core;
 
 /// <summary>
 /// Scoped service for managing flash data that persists through one redirect via TempData.
 /// </summary>
-public class InertiaFlashService : IInertiaFlashService
+public sealed class InertiaFlashService : IInertiaFlashService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly Dictionary<string, object?> _pendingFlash = new();
@@ -109,15 +108,6 @@ public class InertiaFlashService : IInertiaFlashService
         tempData.Save();
     }
 
-    private ITempDataDictionary? GetTempData()
-    {
-        var httpContext = _httpContextAccessor.HttpContext;
-        if (httpContext == null)
-        {
-            return null;
-        }
-
-        var tempDataFactory = httpContext.RequestServices.GetService<ITempDataDictionaryFactory>();
-        return tempDataFactory?.GetTempData(httpContext);
-    }
+    private ITempDataDictionary? GetTempData() =>
+        TempDataAccessor.GetTempData(_httpContextAccessor);
 }

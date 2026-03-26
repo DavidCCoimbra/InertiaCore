@@ -71,7 +71,7 @@ public class PartialReloadTests : PropsResolverTestBase
         var context = new DefaultHttpContext();
         context.Request.Headers[InertiaHeaders.Inertia] = "true";
         context.Request.Headers[InertiaHeaders.PartialComponent] = "Other/Component";
-        context.Request.Headers[InertiaHeaders.PartialOnly] = "name";
+        context.Request.Headers[InertiaHeaders.PartialData] = "name";
 
         var resolver = new InertiaCore.Core.PropsResolver(
             services.BuildServiceProvider(), context.Request, component: "Home/Index");

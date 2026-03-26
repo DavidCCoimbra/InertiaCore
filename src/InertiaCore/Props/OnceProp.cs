@@ -6,7 +6,7 @@ namespace InertiaCore.Props;
 /// <summary>
 /// A prop that is resolved once and excluded on subsequent requests.
 /// </summary>
-public class OnceProp : IInertiaProp, IIgnoreFirstLoad, IOnceable
+public sealed class OnceProp : IInertiaProp, IIgnoreFirstLoad, IOnceable
 {
     private readonly Func<IServiceProvider, Task<object?>> _callback;
     private readonly OnceBehavior _once = new();

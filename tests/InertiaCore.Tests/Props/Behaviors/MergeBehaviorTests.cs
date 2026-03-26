@@ -37,33 +37,33 @@ public class MergeBehaviorTests
     }
 
     [Fact]
-    public void AppendsAtRoot_true_for_default_merge()
+    public void ShouldAppendAtRoot_true_for_default_merge()
     {
         var behavior = new MergeBehavior();
 
         behavior.EnableMerge();
 
-        Assert.True(behavior.AppendsAtRoot());
-        Assert.False(behavior.PrependsAtRoot());
+        Assert.True(behavior.ShouldAppendAtRoot());
+        Assert.False(behavior.ShouldPrependAtRoot());
     }
 
     [Fact]
-    public void AppendsAtRoot_false_when_not_merged()
+    public void ShouldAppendAtRoot_false_when_not_merged()
     {
         var behavior = new MergeBehavior();
 
-        Assert.False(behavior.AppendsAtRoot());
+        Assert.False(behavior.ShouldAppendAtRoot());
     }
 
     [Fact]
-    public void AppendsAtRoot_false_when_deep_merge()
+    public void ShouldAppendAtRoot_false_when_deep_merge()
     {
         var behavior = new MergeBehavior();
 
         behavior.EnableDeepMerge();
 
-        Assert.False(behavior.AppendsAtRoot());
-        Assert.False(behavior.PrependsAtRoot());
+        Assert.False(behavior.ShouldAppendAtRoot());
+        Assert.False(behavior.ShouldPrependAtRoot());
     }
 
     [Fact]
@@ -74,8 +74,8 @@ public class MergeBehaviorTests
         behavior.Prepend();
 
         Assert.True(behavior.ShouldMerge());
-        Assert.True(behavior.PrependsAtRoot());
-        Assert.False(behavior.AppendsAtRoot());
+        Assert.True(behavior.ShouldPrependAtRoot());
+        Assert.False(behavior.ShouldAppendAtRoot());
     }
 
     [Fact]
@@ -87,7 +87,7 @@ public class MergeBehaviorTests
 
         Assert.True(behavior.ShouldMerge());
         Assert.Equal(["data.items"], behavior.GetAppendsAtPaths());
-        Assert.False(behavior.AppendsAtRoot());
+        Assert.False(behavior.ShouldAppendAtRoot());
     }
 
     [Fact]
@@ -99,7 +99,7 @@ public class MergeBehaviorTests
 
         Assert.True(behavior.ShouldMerge());
         Assert.Equal(["data.items"], behavior.GetPrependsAtPaths());
-        Assert.False(behavior.PrependsAtRoot());
+        Assert.False(behavior.ShouldPrependAtRoot());
     }
 
     [Fact]

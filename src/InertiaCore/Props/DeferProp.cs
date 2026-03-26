@@ -6,7 +6,7 @@ namespace InertiaCore.Props;
 /// <summary>
 /// A prop with deferred loading, excluded from the initial response and loaded via partial reload.
 /// </summary>
-public class DeferProp : IInertiaProp, IIgnoreFirstLoad, IDeferrable, IMergeable, IOnceable
+public sealed class DeferProp : IInertiaProp, IIgnoreFirstLoad, IDeferrable, IMergeable, IOnceable
 {
     private readonly Func<IServiceProvider, Task<object?>> _callback;
     private readonly DeferBehavior _defer = new();

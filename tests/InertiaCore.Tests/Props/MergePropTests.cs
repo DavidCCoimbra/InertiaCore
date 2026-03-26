@@ -104,7 +104,7 @@ public class MergePropTests
     {
         var prop = new MergeProp("value");
 
-        Assert.True(prop.Merge.AppendsAtRoot());
+        Assert.True(prop.Merge.ShouldAppendAtRoot());
     }
 
     [Fact]

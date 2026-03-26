@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc.ViewEngines;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace InertiaCore.Core;
 
@@ -18,23 +19,15 @@ namespace InertiaCore.Core;
 /// </summary>
 public class InertiaResponse : IActionResult, IResult
 {
-    private static readonly JsonSerializerOptions s_jsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
+    private static readonly JsonSerializerOptions s_jsonOptions = InertiaJsonOptions.CamelCase;
 
     internal string Component { get; }
     internal Dictionary<string, object?> Props { get; }
     internal Dictionary<string, object?> SharedProps { get; }
-    internal string RootView { get; }
-    internal string? Version { get; }
+    internal string RootView => _context.RootView;
+    internal string? Version => _context.Version;
 
-    private readonly IInertiaFlashService? _flashService;
-    private readonly ISsrGateway? _ssrGateway;
-    private readonly string[] _ssrExcludedPaths;
-    private readonly bool _encryptHistory;
-    private readonly bool _clearHistory;
-    private readonly bool _preserveFragment;
+    private readonly InertiaResponseContext _context;
     private readonly Dictionary<string, object?> _viewData = new();
 
     /// <summary>
@@ -44,26 +37,12 @@ public class InertiaResponse : IActionResult, IResult
         string component,
         Dictionary<string, object?> props,
         Dictionary<string, object?> sharedProps,
-        string rootView,
-        string? version,
-        IInertiaFlashService? flashService = null,
-        ISsrGateway? ssrGateway = null,
-        string[]? ssrExcludedPaths = null,
-        bool encryptHistory = false,
-        bool clearHistory = false,
-        bool preserveFragment = false)
+        InertiaResponseContext context)
     {
         Component = component;
         Props = props;
         SharedProps = sharedProps;
-        RootView = rootView;
-        Version = version;
-        _flashService = flashService;
-        _ssrGateway = ssrGateway;
-        _ssrExcludedPaths = ssrExcludedPaths ?? [];
-        _encryptHistory = encryptHistory;
-        _clearHistory = clearHistory;
-        _preserveFragment = preserveFragment;
+        _context = context;
     }
 
     /// <summary>
@@ -94,7 +73,7 @@ public class InertiaResponse : IActionResult, IResult
         ConsumeFlashIntoSharedProps();
 
         var resolver = new PropsResolver(httpContext.RequestServices, httpContext.Request, Component);
-        var (resolvedProps, metadata) = await resolver.ResolveAsync(SharedProps, Props);
+        var (resolvedProps, metadata) = await resolver.ResolveAsync(SharedProps, Props).ConfigureAwait(false);
 
         var page = BuildPageObject(httpContext, resolvedProps, metadata);
 
@@ -120,7 +99,7 @@ public class InertiaResponse : IActionResult, IResult
             ["component"] = Component,
             ["props"] = resolvedProps,
             ["url"] = GetUrl(httpContext),
-            ["version"] = Version,
+            ["version"] = _context.Version,
         };
 
         foreach (var (key, value) in metadata)
@@ -128,17 +107,17 @@ public class InertiaResponse : IActionResult, IResult
             page[key] = value;
         }
 
-        if (_encryptHistory)
+        if (_context.EncryptHistory)
         {
             page["encryptHistory"] = true;
         }
 
-        if (_clearHistory)
+        if (_context.ClearHistory)
         {
             page["clearHistory"] = true;
         }
 
-        if (_preserveFragment)
+        if (_context.PreserveFragment)
         {
             page["preserveFragment"] = true;
         }
@@ -148,7 +127,7 @@ public class InertiaResponse : IActionResult, IResult
 
     private void ConsumeFlashIntoSharedProps()
     {
-        var flash = _flashService?.Consume();
+        var flash = _context.FlashService?.Consume();
         if (flash != null)
         {
             SharedProps["flash"] = flash;
@@ -168,12 +147,12 @@ public class InertiaResponse : IActionResult, IResult
         var tempDataFactory = httpContext.RequestServices.GetRequiredService<ITempDataDictionaryFactory>();
 
         var actionContext = new ActionContext(httpContext, httpContext.GetRouteData(), new ActionDescriptor());
-        var viewResult = viewEngine.FindView(actionContext, RootView, isMainPage: true);
+        var viewResult = viewEngine.FindView(actionContext, _context.RootView, isMainPage: true);
 
         if (!viewResult.Success)
         {
             throw new InvalidOperationException(
-                $"Razor view '{RootView}' not found. Searched locations: {string.Join(", ", viewResult.SearchedLocations)}");
+                $"Razor view '{_context.RootView}' not found. Searched locations: {string.Join(", ", viewResult.SearchedLocations)}");
         }
 
         var ssrResponse = await TrySsrRenderAsync(httpContext, page);
@@ -205,7 +184,7 @@ public class InertiaResponse : IActionResult, IResult
         HttpContext httpContext,
         Dictionary<string, object?> page)
     {
-        if (_ssrGateway == null)
+        if (_context.SsrGateway == null)
         {
             return null;
         }
@@ -217,23 +196,24 @@ public class InertiaResponse : IActionResult, IResult
 
         try
         {
-            return await _ssrGateway.RenderAsync(page, httpContext.RequestAborted);
+            return await _context.SsrGateway.RenderAsync(page, httpContext.RequestAborted);
         }
-        catch
+        catch (Exception ex)
         {
+            _context.Logger?.LogWarning(ex, "SSR rendering failed unexpectedly, falling back to CSR");
             return null;
         }
     }
 
     private bool IsPathExcludedFromSsr(HttpContext httpContext)
     {
-        if (_ssrExcludedPaths.Length == 0)
+        if (_context.SsrExcludedPaths is not { Length: > 0 })
         {
             return false;
         }
 
         var path = httpContext.Request.Path.Value ?? "/";
-        return _ssrExcludedPaths.Any(excluded =>
+        return _context.SsrExcludedPaths!.Any(excluded =>
             path.StartsWith(excluded, StringComparison.OrdinalIgnoreCase));
     }
 }

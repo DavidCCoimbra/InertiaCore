@@ -10,7 +10,7 @@ namespace InertiaCore.Middleware;
 /// Middleware implementing the core Inertia HTTP protocol: version conflict detection,
 /// redirect conversion, flash/error persistence, fragment handling, and Vary headers.
 /// </summary>
-public class InertiaMiddleware : IMiddleware
+public sealed class InertiaMiddleware : IMiddleware
 {
     /// <inheritdoc />
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
@@ -35,7 +35,7 @@ public class InertiaMiddleware : IMiddleware
     private static void ShareDefaultProps(HttpContext context)
     {
         var errorService = context.RequestServices.GetService<IInertiaErrorService>();
-        var factory = context.RequestServices.GetRequiredService<InertiaResponseFactory>();
+        var factory = context.RequestServices.GetRequiredService<IInertiaResponseFactory>();
         errorService?.ShareErrors(factory);
     }
 
@@ -74,7 +74,7 @@ public class InertiaMiddleware : IMiddleware
             return false;
         }
 
-        var factory = context.RequestServices.GetRequiredService<InertiaResponseFactory>();
+        var factory = context.RequestServices.GetRequiredService<IInertiaResponseFactory>();
         var clientVersion = context.Request.Headers[InertiaHeaders.Version].FirstOrDefault() ?? "";
         var serverVersion = factory.GetVersion() ?? "";
 

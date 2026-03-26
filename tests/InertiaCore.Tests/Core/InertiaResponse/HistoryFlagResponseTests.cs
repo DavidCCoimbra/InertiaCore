@@ -1,3 +1,5 @@
+using InertiaCore.Core;
+
 namespace InertiaCore.Tests.Core.InertiaResponse;
 
 [Trait("Method", "ExecuteAsync")]
@@ -7,7 +9,7 @@ public class HistoryFlagResponseTests : InertiaResponseTestBase
     public async Task EncryptHistory_true_appears_in_page()
     {
         var response = new InertiaCore.Core.InertiaResponse(
-            "Test", new(), new(), "App", null, encryptHistory: true);
+            "Test", new(), new(), new InertiaResponseContext("App", null, EncryptHistory: true));
         var context = CreateInertiaHttpContext();
 
         await response.ExecuteAsync(context);
@@ -33,7 +35,7 @@ public class HistoryFlagResponseTests : InertiaResponseTestBase
     public async Task ClearHistory_true_appears_in_page()
     {
         var response = new InertiaCore.Core.InertiaResponse(
-            "Test", new(), new(), "App", null, clearHistory: true);
+            "Test", new(), new(), new InertiaResponseContext("App", null, ClearHistory: true));
         var context = CreateInertiaHttpContext();
 
         await response.ExecuteAsync(context);
@@ -59,7 +61,7 @@ public class HistoryFlagResponseTests : InertiaResponseTestBase
     public async Task PreserveFragment_true_appears_in_page()
     {
         var response = new InertiaCore.Core.InertiaResponse(
-            "Test", new(), new(), "App", null, preserveFragment: true);
+            "Test", new(), new(), new InertiaResponseContext("App", null, PreserveFragment: true));
         var context = CreateInertiaHttpContext();
 
         await response.ExecuteAsync(context);

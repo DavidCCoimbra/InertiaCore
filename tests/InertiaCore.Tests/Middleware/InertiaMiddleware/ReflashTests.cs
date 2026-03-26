@@ -84,7 +84,7 @@ public class ReflashTests : InertiaMiddlewareTestBase
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
         services.AddSingleton(Microsoft.Extensions.Options.Options.Create(
             new InertiaCore.Configuration.InertiaOptions()));
-        services.AddScoped<InertiaResponseFactory>();
+        services.AddScoped<IInertiaResponseFactory, InertiaResponseFactory>();
         context.RequestServices = services.BuildServiceProvider();
 
         return context;

@@ -10,7 +10,7 @@ namespace InertiaCore.Core;
 /// <summary>
 /// Scoped service that orchestrates Inertia responses. One instance per HTTP request.
 /// </summary>
-public class InertiaResponseFactory
+public class InertiaResponseFactory : IInertiaResponseFactory
 {
     private readonly InertiaOptions _options;
     private readonly IInertiaFlashService _flashService;
@@ -41,19 +41,18 @@ public class InertiaResponseFactory
     /// </summary>
     public InertiaResponse Render(string component, Dictionary<string, object?>? props = null)
     {
-        return new InertiaResponse(
-            component: component,
-            props: props ?? new(),
-            sharedProps: new Dictionary<string, object?>(_sharedProps),
-            rootView: _rootView,
-            version: GetVersion(),
-            flashService: _flashService,
-            ssrGateway: _ssrGateway,
-            ssrExcludedPaths: _options.Ssr.ExcludedPaths,
-            encryptHistory: _encryptHistory ?? _options.EncryptHistory,
-            clearHistory: _clearHistory,
-            preserveFragment: _preserveFragment
-        );
+        var context = new InertiaResponseContext(
+            RootView: _rootView,
+            Version: GetVersion(),
+            FlashService: _flashService,
+            SsrGateway: _ssrGateway,
+            SsrExcludedPaths: _options.Ssr.ExcludedPaths,
+            EncryptHistory: _encryptHistory ?? _options.EncryptHistory,
+            ClearHistory: _clearHistory,
+            PreserveFragment: _preserveFragment);
+
+        return new InertiaResponse(component, props ?? new(),
+            new Dictionary<string, object?>(_sharedProps), context);
     }
 
     /// <summary>
