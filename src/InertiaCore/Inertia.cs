@@ -59,13 +59,8 @@ public static class Inertia
     /// <summary>
     /// Returns an external redirect response via 409 + X-Inertia-Location header.
     /// </summary>
-    public static IResult Location(string url)
-    {
-        var context = GetHttpContext();
-        context.Response.StatusCode = StatusCodes.Status409Conflict;
-        context.Response.Headers[InertiaHeaders.Location] = url;
-        return Results.StatusCode(StatusCodes.Status409Conflict);
-    }
+    public static IResult Location(string url) =>
+        GetFactory().Location(url);
 
     /// <summary>
     /// Creates a redirect back to the referring page.

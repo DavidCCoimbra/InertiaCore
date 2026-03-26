@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace InertiaCore.Core;
 
 /// <summary>
@@ -94,6 +96,11 @@ public interface IInertiaResponseFactory
     /// Creates a redirect to the specified URL. Chain .WithErrors() or .WithFlash() for data.
     /// </summary>
     InertiaRedirectResult Redirect(string url);
+
+    /// <summary>
+    /// Returns an external redirect response via 409 + X-Inertia-Location header.
+    /// </summary>
+    IResult Location(string url);
 
     /// <summary>
     /// Adds a once-resolved prop to shared props.

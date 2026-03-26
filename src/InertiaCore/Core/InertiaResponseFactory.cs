@@ -329,6 +329,18 @@ public class InertiaResponseFactory : IInertiaResponseFactory
     public static ScrollProp<T> Scroll<T>(Func<T?> callback, string wrapper = "data", IProvidesScrollMetadata? metadataProvider = null) =>
         new(callback, wrapper, metadataProvider);
 
+    /// <inheritdoc />
+    public IResult Location(string url)
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        if (httpContext != null)
+        {
+            httpContext.Response.Headers[Constants.InertiaHeaders.Location] = url;
+        }
+
+        return Results.StatusCode(StatusCodes.Status409Conflict);
+    }
+
     /// <summary>
     /// Adds a once-resolved prop to shared props.
     /// </summary>
