@@ -49,6 +49,7 @@ public class InertiaResponseFactory
             version: GetVersion(),
             flashService: _flashService,
             ssrGateway: _ssrGateway,
+            ssrExcludedPaths: _options.Ssr.ExcludedPaths,
             encryptHistory: _encryptHistory ?? _options.EncryptHistory,
             clearHistory: _clearHistory,
             preserveFragment: _preserveFragment

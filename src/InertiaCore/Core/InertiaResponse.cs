@@ -31,6 +31,7 @@ public class InertiaResponse : IActionResult, IResult
 
     private readonly IInertiaFlashService? _flashService;
     private readonly ISsrGateway? _ssrGateway;
+    private readonly string[] _ssrExcludedPaths;
     private readonly bool _encryptHistory;
     private readonly bool _clearHistory;
     private readonly bool _preserveFragment;
@@ -47,6 +48,7 @@ public class InertiaResponse : IActionResult, IResult
         string? version,
         IInertiaFlashService? flashService = null,
         ISsrGateway? ssrGateway = null,
+        string[]? ssrExcludedPaths = null,
         bool encryptHistory = false,
         bool clearHistory = false,
         bool preserveFragment = false)
@@ -58,6 +60,7 @@ public class InertiaResponse : IActionResult, IResult
         Version = version;
         _flashService = flashService;
         _ssrGateway = ssrGateway;
+        _ssrExcludedPaths = ssrExcludedPaths ?? [];
         _encryptHistory = encryptHistory;
         _clearHistory = clearHistory;
         _preserveFragment = preserveFragment;
@@ -207,6 +210,11 @@ public class InertiaResponse : IActionResult, IResult
             return null;
         }
 
+        if (IsPathExcludedFromSsr(httpContext))
+        {
+            return null;
+        }
+
         try
         {
             return await _ssrGateway.RenderAsync(page, httpContext.RequestAborted);
@@ -215,5 +223,17 @@ public class InertiaResponse : IActionResult, IResult
         {
             return null;
         }
+    }
+
+    private bool IsPathExcludedFromSsr(HttpContext httpContext)
+    {
+        if (_ssrExcludedPaths.Length == 0)
+        {
+            return false;
+        }
+
+        var path = httpContext.Request.Path.Value ?? "/";
+        return _ssrExcludedPaths.Any(excluded =>
+            path.StartsWith(excluded, StringComparison.OrdinalIgnoreCase));
     }
 }
