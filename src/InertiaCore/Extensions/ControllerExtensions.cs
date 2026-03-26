@@ -1,6 +1,7 @@
-using System.Text.Json;
 using InertiaCore.Constants;
+using InertiaCore.Core;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace InertiaCore.Extensions;
 
@@ -42,14 +43,7 @@ public static class ControllerExtensions
         }
 
         var errorBag = controller.Request.Headers[InertiaHeaders.ErrorBag].FirstOrDefault();
-        if (!string.IsNullOrEmpty(errorBag))
-        {
-            controller.TempData[SessionKeys.Errors] = JsonSerializer.Serialize(
-                new Dictionary<string, object> { [errorBag] = errors });
-        }
-        else
-        {
-            controller.TempData[SessionKeys.Errors] = JsonSerializer.Serialize(errors);
-        }
+        var errorService = controller.HttpContext.RequestServices.GetRequiredService<IInertiaErrorService>();
+        errorService.SetErrors(errors, errorBag);
     }
 }

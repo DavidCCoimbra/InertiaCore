@@ -55,6 +55,7 @@ public class EncryptHistoryMiddlewareTests
         var context = new DefaultHttpContext();
         var services = new ServiceCollection();
         services.AddSingleton(Substitute.For<IInertiaFlashService>());
+        services.AddSingleton<IHttpContextAccessor>(new HttpContextAccessor { HttpContext = context });
         services.AddSingleton(Options.Create(new InertiaOptions()));
         services.AddScoped<IInertiaResponseFactory, InertiaResponseFactory>();
         context.RequestServices = services.BuildServiceProvider();

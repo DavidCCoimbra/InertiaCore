@@ -1,5 +1,6 @@
 using InertiaCore.Configuration;
 using InertiaCore.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 
@@ -12,7 +13,7 @@ public class FlashTests
     public void Flash_delegates_to_flash_service()
     {
         var flashService = Substitute.For<IInertiaFlashService>();
-        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService, Substitute.For<IHttpContextAccessor>());
 
         factory.Flash("success", "Done!");
 
@@ -23,7 +24,7 @@ public class FlashTests
     public void Flash_dictionary_delegates_to_flash_service()
     {
         var flashService = Substitute.For<IInertiaFlashService>();
-        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService, Substitute.For<IHttpContextAccessor>());
         var data = new Dictionary<string, object?> { ["a"] = "1", ["b"] = "2" };
 
         factory.Flash(data);
@@ -36,7 +37,7 @@ public class FlashTests
     {
         var flashService = Substitute.For<IInertiaFlashService>();
         flashService.GetPending().Returns(new Dictionary<string, object?> { ["key"] = "value" });
-        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService, Substitute.For<IHttpContextAccessor>());
 
         var result = factory.GetFlashed();
 

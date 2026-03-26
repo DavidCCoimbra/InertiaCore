@@ -3,6 +3,7 @@ using InertiaCore.Configuration;
 using InertiaCore.Contracts;
 using InertiaCore.Props;
 using InertiaCore.Ssr;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 
 namespace InertiaCore.Core;
@@ -14,6 +15,7 @@ public class InertiaResponseFactory : IInertiaResponseFactory
 {
     private readonly InertiaOptions _options;
     private readonly IInertiaFlashService _flashService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ISsrGateway? _ssrGateway;
     private string _rootView;
     private readonly Dictionary<string, object?> _sharedProps = new();
@@ -28,10 +30,12 @@ public class InertiaResponseFactory : IInertiaResponseFactory
     public InertiaResponseFactory(
         IOptions<InertiaOptions> options,
         IInertiaFlashService flashService,
+        IHttpContextAccessor httpContextAccessor,
         ISsrGateway? ssrGateway = null)
     {
         _options = options.Value;
         _flashService = flashService;
+        _httpContextAccessor = httpContextAccessor;
         _ssrGateway = ssrGateway;
         _rootView = _options.RootView;
     }
@@ -66,6 +70,16 @@ public class InertiaResponseFactory : IInertiaResponseFactory
     /// </summary>
     public InertiaResponse Render<TProps>(string component, TProps props) where TProps : class =>
         Render(component, (object)props);
+
+    /// <inheritdoc />
+    public InertiaRedirectResult Back()
+    {
+        var referer = _httpContextAccessor.HttpContext?.Request.Headers.Referer.FirstOrDefault() ?? "/";
+        return new InertiaRedirectResult(referer);
+    }
+
+    /// <inheritdoc />
+    public InertiaRedirectResult Redirect(string url) => new(url);
 
     /// <summary>
     /// Adds a shared prop for this request.

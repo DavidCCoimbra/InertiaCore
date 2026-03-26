@@ -67,6 +67,18 @@ public static class Inertia
         return Results.StatusCode(StatusCodes.Status409Conflict);
     }
 
+    /// <summary>
+    /// Creates a redirect back to the referring page.
+    /// </summary>
+    public static InertiaRedirectResult Back() =>
+        GetFactory().Back();
+
+    /// <summary>
+    /// Creates a redirect to the specified URL.
+    /// </summary>
+    public static InertiaRedirectResult Redirect(string url) =>
+        GetFactory().Redirect(url);
+
     // -- Prop factory methods (pure constructors, no initialization required) --
 
     // Always

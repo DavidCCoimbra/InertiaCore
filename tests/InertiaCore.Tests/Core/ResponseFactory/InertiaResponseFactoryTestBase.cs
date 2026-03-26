@@ -1,5 +1,6 @@
 using InertiaCore.Configuration;
 using InertiaCore.Core;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 
@@ -13,6 +14,7 @@ public abstract class InertiaResponseFactoryTestBase
         var options = new InertiaOptions();
         configure?.Invoke(options);
         var flashService = Substitute.For<IInertiaFlashService>();
-        return new InertiaResponseFactory(Options.Create(options), flashService);
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        return new InertiaResponseFactory(Options.Create(options), flashService, httpContextAccessor);
     }
 }

@@ -76,7 +76,7 @@ public class InertiaErrorServiceTests
         httpContextAccessor.HttpContext.Returns((HttpContext?)null);
         var service = new InertiaErrorService(httpContextAccessor);
         var flashService = Substitute.For<IInertiaFlashService>();
-        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService, Substitute.For<IHttpContextAccessor>());
 
         service.ShareErrors(factory);
     }
@@ -100,7 +100,7 @@ public class InertiaErrorServiceTests
         httpContextAccessor.HttpContext.Returns(httpContext);
         var service = new InertiaErrorService(httpContextAccessor);
         var flashService = Substitute.For<IInertiaFlashService>();
-        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService, Substitute.For<IHttpContextAccessor>());
 
         service.ShareErrors(factory);
     }
@@ -114,7 +114,7 @@ public class InertiaErrorServiceTests
         httpContextAccessor.HttpContext.Returns(httpContext);
         var service = new InertiaErrorService(httpContextAccessor);
         var flashService = Substitute.For<IInertiaFlashService>();
-        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService, Substitute.For<IHttpContextAccessor>());
 
         service.ShareErrors(factory);
 
@@ -163,7 +163,7 @@ public class InertiaErrorServiceTests
 
         var errorService = new InertiaErrorService(httpContextAccessor);
         var flashService = Substitute.For<IInertiaFlashService>();
-        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService);
+        var factory = new InertiaResponseFactory(Options.Create(new InertiaOptions()), flashService, Substitute.For<IHttpContextAccessor>());
 
         return (errorService, factory);
     }
@@ -191,6 +191,53 @@ public class InertiaErrorServiceTests
         context.Request.Headers[InertiaHeaders.Inertia] = "true";
         context.Response.Body = new MemoryStream();
         return context;
+    }
+
+    // -- SetErrors --
+
+    [Fact]
+    public void SetErrors_stores_errors_in_tempdata()
+    {
+        var (service, tempData) = CreateServiceWithTempData();
+
+        service.SetErrors(new() { ["Name"] = "Required", ["Email"] = "Invalid" });
+
+        Assert.True(tempData.ContainsKey(SessionKeys.Errors));
+        var errors = JsonSerializer.Deserialize<Dictionary<string, string>>(tempData[SessionKeys.Errors] as string ?? "");
+        Assert.Equal("Required", errors!["Name"]);
+        Assert.Equal("Invalid", errors["Email"]);
+    }
+
+    [Fact]
+    public void SetErrors_with_error_bag_wraps_under_bag_name()
+    {
+        var (service, tempData) = CreateServiceWithTempData();
+
+        service.SetErrors(new() { ["Name"] = "Required" }, errorBag: "createUser");
+
+        var json = tempData[SessionKeys.Errors] as string;
+        var bag = JsonSerializer.Deserialize<Dictionary<string, object?>>(json!);
+        Assert.True(bag!.ContainsKey("createUser"));
+    }
+
+    [Fact]
+    public void SetErrors_does_nothing_when_empty()
+    {
+        var (service, tempData) = CreateServiceWithTempData();
+
+        service.SetErrors(new());
+
+        Assert.False(tempData.ContainsKey(SessionKeys.Errors));
+    }
+
+    [Fact]
+    public void SetErrors_without_tempdata_does_not_throw()
+    {
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext.Returns((HttpContext?)null);
+        var service = new InertiaErrorService(httpContextAccessor);
+
+        service.SetErrors(new() { ["Name"] = "Required" });
     }
 
     private sealed class TestTempDataDictionary : Dictionary<string, object?>, ITempDataDictionary

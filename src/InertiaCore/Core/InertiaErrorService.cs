@@ -34,6 +34,33 @@ public sealed class InertiaErrorService : IInertiaErrorService
     }
 
     /// <inheritdoc />
+    public void SetErrors(Dictionary<string, string> errors, string? errorBag = null)
+    {
+        if (errors.Count == 0)
+        {
+            return;
+        }
+
+        var tempData = GetTempData();
+        if (tempData == null)
+        {
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(errorBag))
+        {
+            tempData[SessionKeys.Errors] = JsonSerializer.Serialize(
+                new Dictionary<string, object> { [errorBag] = errors });
+        }
+        else
+        {
+            tempData[SessionKeys.Errors] = JsonSerializer.Serialize(errors);
+        }
+
+        tempData.Save();
+    }
+
+    /// <inheritdoc />
     public void Reflash()
     {
         var tempData = GetTempData();

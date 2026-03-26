@@ -1,5 +1,6 @@
 using System.Text.Json;
 using InertiaCore.Constants;
+using InertiaCore.Core;
 using InertiaCore.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -103,12 +104,25 @@ public class ControllerExtensionsTests
     private static (TestController Controller, ITempDataDictionary TempData) CreateController()
     {
         var tempData = new TestTempDataDictionary();
+        var httpContext = new DefaultHttpContext();
+
+        // Register IInertiaErrorService backed by real TempData
+        var httpContextAccessor = Substitute.For<IHttpContextAccessor>();
+        httpContextAccessor.HttpContext.Returns(httpContext);
+        var tempDataFactory = Substitute.For<ITempDataDictionaryFactory>();
+        tempDataFactory.GetTempData(httpContext).Returns(tempData);
+        httpContext.RequestServices = new ServiceCollection()
+            .AddSingleton(httpContextAccessor)
+            .AddSingleton(tempDataFactory)
+            .AddScoped<IInertiaErrorService, InertiaErrorService>()
+            .BuildServiceProvider();
+
         var controller = new TestController
         {
             TempData = tempData,
             ControllerContext = new ControllerContext
             {
-                HttpContext = new DefaultHttpContext(),
+                HttpContext = httpContext,
             },
         };
 

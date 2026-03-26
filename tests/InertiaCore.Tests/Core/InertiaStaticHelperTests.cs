@@ -71,17 +71,16 @@ public class InertiaStaticHelperTests
     private static (IInertiaResponseFactory Factory, IHttpContextAccessor Accessor) SetupStaticHelper()
     {
         var flashService = Substitute.For<IInertiaFlashService>();
+        var httpContext = new DefaultHttpContext();
+        var accessor = Substitute.For<IHttpContextAccessor>();
+        accessor.HttpContext.Returns(httpContext);
         var factory = new InertiaCore.Core.InertiaResponseFactory(
             Options.Create(new InertiaCore.Configuration.InertiaOptions()),
-            flashService);
-
-        var httpContext = new DefaultHttpContext();
+            flashService,
+            accessor);
         var services = new ServiceCollection();
         services.AddSingleton<IInertiaResponseFactory>(factory);
         httpContext.RequestServices = services.BuildServiceProvider();
-
-        var accessor = Substitute.For<IHttpContextAccessor>();
-        accessor.HttpContext.Returns(httpContext);
 
         Inertia.Initialize(accessor);
 

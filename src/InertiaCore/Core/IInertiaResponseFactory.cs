@@ -86,6 +86,16 @@ public interface IInertiaResponseFactory
     Dictionary<string, object?> GetFlashed();
 
     /// <summary>
+    /// Creates a redirect back to the referring page. Chain .WithErrors() or .WithFlash() for data.
+    /// </summary>
+    InertiaRedirectResult Back();
+
+    /// <summary>
+    /// Creates a redirect to the specified URL. Chain .WithErrors() or .WithFlash() for data.
+    /// </summary>
+    InertiaRedirectResult Redirect(string url);
+
+    /// <summary>
     /// Adds a once-resolved prop to shared props.
     /// </summary>
     void ShareOnce(string key, Func<object?> callback);
