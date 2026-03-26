@@ -1,4 +1,5 @@
 using InertiaCore.Constants;
+using InertiaCore.Contracts;
 using InertiaCore.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
@@ -34,8 +35,16 @@ public sealed class InertiaMiddleware : IMiddleware
 
     private static void ShareDefaultProps(HttpContext context)
     {
-        var errorService = context.RequestServices.GetService<IInertiaErrorService>();
         var factory = context.RequestServices.GetRequiredService<IInertiaResponseFactory>();
+
+        // Apply registered shared props providers (lower priority — per-request shares override)
+        var providers = context.RequestServices.GetServices<ISharedPropsProvider>();
+        foreach (var provider in providers)
+        {
+            factory.Share(provider.GetSharedProps(context));
+        }
+
+        var errorService = context.RequestServices.GetService<IInertiaErrorService>();
         errorService?.ShareErrors(factory);
     }
 
