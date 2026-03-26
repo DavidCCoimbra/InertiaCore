@@ -1,0 +1,46 @@
+name: Publish NuGet
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore InertiaCore.slnx
+
+      - name: Build
+        run: dotnet build InertiaCore.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test InertiaCore.slnx --no-build -c Release
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Pack InertiaCore
+        run: dotnet pack src/InertiaCore/InertiaCore.csproj -c Release --no-build -o nupkgs /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Pack InertiaCore.Testing
+        run: dotnet pack src/InertiaCore.Testing/InertiaCore.Testing.csproj -c Release --no-build -o nupkgs /p:Version=${{ steps.version.outputs.VERSION }}
+
+      - name: Push to NuGet
+        run: dotnet nuget push "nupkgs/*.nupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Push symbols to NuGet
+        run: dotnet nuget push "nupkgs/*.snupkg" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+        continue-on-error: true
