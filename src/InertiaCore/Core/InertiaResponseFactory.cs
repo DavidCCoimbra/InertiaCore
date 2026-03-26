@@ -62,6 +62,13 @@ public class InertiaResponseFactory : IInertiaResponseFactory
         Render(component, ConvertToPropsDict(props));
 
     /// <summary>
+    /// Creates an <see cref="InertiaResponse"/> for the given component with typed props.
+    /// Properties are converted to a dictionary via reflection.
+    /// </summary>
+    public InertiaResponse Render<TProps>(string component, TProps props) where TProps : class =>
+        Render(component, ConvertToPropsDict(props));
+
+    /// <summary>
     /// Adds a shared prop for this request.
     /// </summary>
     public void Share(string key, object? value) =>

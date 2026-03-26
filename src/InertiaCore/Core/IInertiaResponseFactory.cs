@@ -16,6 +16,11 @@ public interface IInertiaResponseFactory
     InertiaResponse Render(string component, object props);
 
     /// <summary>
+    /// Creates an <see cref="InertiaResponse"/> for the given component with typed props.
+    /// </summary>
+    InertiaResponse Render<TProps>(string component, TProps props) where TProps : class;
+
+    /// <summary>
     /// Adds a shared prop for this request.
     /// </summary>
     void Share(string key, object? value);
