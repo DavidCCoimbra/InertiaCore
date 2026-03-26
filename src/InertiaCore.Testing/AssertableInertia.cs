@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using InertiaCore.Constants;
@@ -566,6 +567,68 @@ public sealed partial class AssertableInertia
         }
 
         return this;
+    }
+
+    // -- Snapshot assertions --
+
+    private static readonly JsonSerializerOptions s_snapshotOptions = new()
+    {
+        WriteIndented = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
+    /// <summary>
+    /// Asserts the page object matches a saved snapshot. On first run, creates the snapshot.
+    /// Snapshot files are stored in a __snapshots__ directory next to the test file.
+    /// </summary>
+    public AssertableInertia MatchesSnapshot(
+        [CallerFilePath] string filePath = "",
+        [CallerMemberName] string memberName = "")
+    {
+        var snapshotPath = GetSnapshotPath(filePath, memberName);
+        var actual = JsonSerializer.Serialize(Page, s_snapshotOptions);
+
+        if (!File.Exists(snapshotPath))
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(snapshotPath)!);
+            File.WriteAllText(snapshotPath, actual);
+            return this;
+        }
+
+        var expected = File.ReadAllText(snapshotPath);
+        if (actual != expected)
+        {
+            throw new AssertionException(
+                $"Snapshot mismatch for '{memberName}'.\n" +
+                $"Snapshot: {snapshotPath}\n" +
+                $"To update, delete the snapshot file and re-run the test.\n\n" +
+                $"Expected:\n{expected}\n\nActual:\n{actual}");
+        }
+
+        return this;
+    }
+
+    /// <summary>
+    /// Forces the snapshot to be updated with the current page object.
+    /// </summary>
+    public AssertableInertia UpdateSnapshot(
+        [CallerFilePath] string filePath = "",
+        [CallerMemberName] string memberName = "")
+    {
+        var snapshotPath = GetSnapshotPath(filePath, memberName);
+        var actual = JsonSerializer.Serialize(Page, s_snapshotOptions);
+
+        Directory.CreateDirectory(Path.GetDirectoryName(snapshotPath)!);
+        File.WriteAllText(snapshotPath, actual);
+
+        return this;
+    }
+
+    private static string GetSnapshotPath(string filePath, string memberName)
+    {
+        var directory = Path.GetDirectoryName(filePath)!;
+        var className = Path.GetFileNameWithoutExtension(filePath);
+        return Path.Combine(directory, "__snapshots__", $"{className}.{memberName}.snap");
     }
 
     // -- Private helpers --
