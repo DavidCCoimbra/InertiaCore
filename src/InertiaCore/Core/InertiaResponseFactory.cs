@@ -62,6 +62,12 @@ public class InertiaResponseFactory : IInertiaResponseFactory
         Render(component, ConvertToPropsDict(props));
 
     /// <summary>
+    /// Creates an <see cref="InertiaResponse"/> for the given component and strongly-typed props.
+    /// </summary>
+    public InertiaResponse Render<TProps>(string component, TProps props) where TProps : class =>
+        Render(component, (object)props);
+
+    /// <summary>
     /// Adds a shared prop for this request.
     /// </summary>
     public void Share(string key, object? value) =>

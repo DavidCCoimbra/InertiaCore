@@ -1,3 +1,5 @@
+using InertiaCore.Core;
+
 namespace InertiaCore.Tests.Core.ResponseFactory;
 
 [Trait("Method", "Render")]
@@ -89,4 +91,47 @@ public class RenderTests : InertiaResponseFactoryTestBase
 
         Assert.Equal("App", response.RootView);
     }
+
+    // -- Render<TProps> --
+
+    [Fact]
+    public void Render_generic_converts_typed_props_to_dictionary()
+    {
+        var factory = CreateFactory();
+
+        var response = factory.Render("Users/Show", new UserProps("Alice", 30));
+
+        Assert.Equal("Alice", response.Props["Name"]);
+        Assert.Equal(30, response.Props["Age"]);
+    }
+
+    [Fact]
+    public void Render_generic_available_via_interface()
+    {
+        IInertiaResponseFactory factory = CreateFactory();
+
+        var response = factory.Render("Users/Show", new UserProps("Bob", 25));
+
+        Assert.Equal("Users/Show", response.Component);
+        Assert.Equal("Bob", response.Props["Name"]);
+    }
+
+    [Fact]
+    public void Render_generic_with_record_preserves_all_properties()
+    {
+        var factory = CreateFactory();
+        var props = new DashboardProps(
+            Title: "Dashboard",
+            Items: [1, 2, 3],
+            IsAdmin: true);
+
+        var response = factory.Render("Dashboard/Index", props);
+
+        Assert.Equal("Dashboard", response.Props["Title"]);
+        Assert.Equal(new[] { 1, 2, 3 }, response.Props["Items"]);
+        Assert.Equal(true, response.Props["IsAdmin"]);
+    }
+
+    private record UserProps(string Name, int Age);
+    private record DashboardProps(string Title, int[] Items, bool IsAdmin);
 }
