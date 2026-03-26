@@ -2,6 +2,7 @@ using InertiaCore.Configuration;
 using InertiaCore.Core;
 using InertiaCore.Middleware;
 using InertiaCore.Ssr;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
@@ -41,5 +42,32 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<Contracts.ISharedPropsProvider, TProvider>();
         return services;
+    }
+
+    /// <summary>
+    /// Enables the static Inertia helper for use without DI injection.
+    /// DI injection of IInertiaResponseFactory is preferred for testability.
+    /// </summary>
+    public static IServiceCollection AddInertiaStaticHelper(this IServiceCollection services)
+    {
+        services.AddHttpContextAccessor();
+
+        // Use a hosted service to initialize the static helper after DI is built
+        services.AddSingleton<StaticHelperInitializer>();
+        services.AddHostedService(sp => sp.GetRequiredService<StaticHelperInitializer>());
+
+        return services;
+    }
+
+    private sealed class StaticHelperInitializer(IHttpContextAccessor accessor)
+        : Microsoft.Extensions.Hosting.IHostedService
+    {
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            Inertia.Initialize(accessor);
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
     }
 }
