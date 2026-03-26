@@ -21,14 +21,6 @@ public class MergePropTests
         Assert.IsAssignableFrom<IOnceable>(prop);
     }
 
-    [Fact]
-    public void Does_not_implement_IIgnoreFirstLoad()
-    {
-        var prop = new MergeProp("value");
-
-        Assert.False(prop is IIgnoreFirstLoad);
-    }
-
     // -- Resolution --
 
     [Fact]

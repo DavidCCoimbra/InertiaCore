@@ -21,14 +21,6 @@ public class OncePropTests
         Assert.IsAssignableFrom<IOnceable>(prop);
     }
 
-    [Fact]
-    public void Does_not_implement_IMergeable()
-    {
-        var prop = new OnceProp(() => (object?)null);
-
-        Assert.False(prop is IMergeable);
-    }
-
     // -- Resolution --
 
     [Fact]

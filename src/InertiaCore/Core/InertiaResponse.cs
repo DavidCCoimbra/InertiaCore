@@ -17,7 +17,7 @@ namespace InertiaCore.Core;
 /// <summary>
 /// Builds the page object and renders as JSON for Inertia requests or as a Razor view for initial page loads.
 /// </summary>
-public class InertiaResponse : IActionResult, IResult
+public partial class InertiaResponse : IActionResult, IResult
 {
     private static readonly JsonSerializerOptions s_jsonOptions = InertiaJsonOptions.CamelCase;
 
@@ -200,7 +200,11 @@ public class InertiaResponse : IActionResult, IResult
         }
         catch (Exception ex)
         {
-            _context.Logger?.LogWarning(ex, "SSR rendering failed unexpectedly, falling back to CSR");
+            if (_context.Logger is { } logger)
+            {
+                LogSsrFallback(logger, ex);
+            }
+
             return null;
         }
     }
@@ -216,4 +220,7 @@ public class InertiaResponse : IActionResult, IResult
         return _context.SsrExcludedPaths!.Any(excluded =>
             path.StartsWith(excluded, StringComparison.OrdinalIgnoreCase));
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "SSR rendering failed unexpectedly, falling back to CSR")]
+    private static partial void LogSsrFallback(ILogger logger, Exception exception);
 }

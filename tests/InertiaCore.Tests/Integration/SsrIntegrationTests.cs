@@ -69,6 +69,33 @@ public class SsrIntegrationTests
     }
 
     [Fact]
+    public async Task Excluded_path_skips_ssr()
+    {
+        var ssrGateway = Substitute.For<ISsrGateway>();
+
+        await using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.UseEnvironment("Testing");
+                builder.ConfigureServices(services =>
+                {
+                    services.AddSingleton(ssrGateway);
+                });
+                builder.ConfigureServices(svc =>
+                    svc.PostConfigure<InertiaCore.Configuration.InertiaOptions>(o =>
+                        o.Ssr.ExcludedPaths = ["/"]));
+
+            });
+
+        var client = factory.CreateClient();
+        await client.GetAsync("/");
+
+        // SSR gateway should not be called for excluded path
+        await ssrGateway.DidNotReceive().RenderAsync(
+            Arg.Any<Dictionary<string, object?>>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
     public async Task Ssr_failure_falls_back_to_csr()
     {
         var ssrGateway = Substitute.For<ISsrGateway>();

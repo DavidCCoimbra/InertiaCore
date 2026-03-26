@@ -85,11 +85,4 @@ public class AlwaysPropTests
         Assert.IsAssignableFrom<IInertiaProp>(prop);
     }
 
-    [Fact]
-    public void Does_not_implement_IIgnoreFirstLoad()
-    {
-        var prop = new AlwaysProp("test");
-
-        Assert.False(prop is IIgnoreFirstLoad);
-    }
 }

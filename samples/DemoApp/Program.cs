@@ -112,6 +112,8 @@ app.MapGet("/scroll", (IInertiaResponseFactory inertia, HttpContext context) =>
 
 app.MapGet("/api/health", () => Results.Ok(new { Status = "ok" }));
 
+app.MapInertiaSsrHealthCheck();
+
 app.MapMethods("/redirect", new[] { "PUT" }, () => Results.Redirect("/"));
 
 app.Run();
