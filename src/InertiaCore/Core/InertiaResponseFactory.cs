@@ -141,67 +141,163 @@ public class InertiaResponseFactory : IInertiaResponseFactory
     public Dictionary<string, object?> GetFlashed() =>
         _flashService.GetPending();
 
-    // -- Prop factory methods --
+    // -- Prop factory methods (non-generic) --
 
     /// <summary>
     /// Creates a prop that is always included, even during partial reloads.
     /// </summary>
     public static AlwaysProp Always(object? value) => new(value);
 
-    /// <summary>
-    /// Creates a prop that is always included, wrapping a callback.
-    /// </summary>
+    /// <inheritdoc cref="Always(object?)"/>
     public static AlwaysProp Always(Func<object?> callback) => new(callback);
 
-    /// <summary>
-    /// Creates a prop that is always included, wrapping an async callback.
-    /// </summary>
+    /// <inheritdoc cref="Always(object?)"/>
     public static AlwaysProp Always(Func<Task<object?>> callback) => new(callback);
+
+    /// <inheritdoc cref="Always(object?)"/>
+    public static AlwaysProp Always(Func<IServiceProvider, object?> callback) => new(callback);
+
+    /// <inheritdoc cref="Always(object?)"/>
+    public static AlwaysProp Always(Func<IServiceProvider, Task<object?>> callback) => new(callback);
 
     /// <summary>
     /// Creates a prop excluded from the initial load, included when explicitly requested.
     /// </summary>
     public static OptionalProp Optional(Func<object?> callback) => new(callback);
 
-    /// <summary>
-    /// Creates a prop excluded from the initial load, wrapping an async callback.
-    /// </summary>
+    /// <inheritdoc cref="Optional(Func{object})"/>
     public static OptionalProp Optional(Func<Task<object?>> callback) => new(callback);
+
+    /// <inheritdoc cref="Optional(Func{object})"/>
+    public static OptionalProp Optional(Func<IServiceProvider, object?> callback) => new(callback);
+
+    /// <inheritdoc cref="Optional(Func{object})"/>
+    public static OptionalProp Optional(Func<IServiceProvider, Task<object?>> callback) => new(callback);
 
     /// <summary>
     /// Creates a deferred prop loaded asynchronously after initial render.
     /// </summary>
     public static DeferProp Defer(Func<object?> callback, string? group = null) => new(callback, group);
 
-    /// <summary>
-    /// Creates a deferred prop wrapping an async callback.
-    /// </summary>
+    /// <inheritdoc cref="Defer(Func{object}, string?)"/>
     public static DeferProp Defer(Func<Task<object?>> callback, string? group = null) => new(callback, group);
+
+    /// <inheritdoc cref="Defer(Func{object}, string?)"/>
+    public static DeferProp Defer(Func<IServiceProvider, object?> callback, string? group = null) => new(callback, group);
+
+    /// <inheritdoc cref="Defer(Func{object}, string?)"/>
+    public static DeferProp Defer(Func<IServiceProvider, Task<object?>> callback, string? group = null) => new(callback, group);
 
     /// <summary>
     /// Creates a prop that merges with existing client-side data.
     /// </summary>
     public static MergeProp Merge(object? value) => new(value);
 
-    /// <summary>
-    /// Creates a prop that merges with existing client-side data, wrapping a callback.
-    /// </summary>
+    /// <inheritdoc cref="Merge(object?)"/>
     public static MergeProp Merge(Func<object?> callback) => new(callback);
 
-    /// <summary>
-    /// Creates a prop that merges with existing client-side data, wrapping an async callback.
-    /// </summary>
+    /// <inheritdoc cref="Merge(object?)"/>
     public static MergeProp Merge(Func<Task<object?>> callback) => new(callback);
+
+    /// <inheritdoc cref="Merge(object?)"/>
+    public static MergeProp Merge(Func<IServiceProvider, object?> callback) => new(callback);
+
+    /// <inheritdoc cref="Merge(object?)"/>
+    public static MergeProp Merge(Func<IServiceProvider, Task<object?>> callback) => new(callback);
 
     /// <summary>
     /// Creates a prop resolved once and excluded on subsequent requests.
     /// </summary>
     public static OnceProp Once(Func<object?> callback) => new(callback);
 
-    /// <summary>
-    /// Creates a prop resolved once, wrapping an async callback.
-    /// </summary>
+    /// <inheritdoc cref="Once(Func{object})"/>
     public static OnceProp Once(Func<Task<object?>> callback) => new(callback);
+
+    /// <inheritdoc cref="Once(Func{object})"/>
+    public static OnceProp Once(Func<IServiceProvider, object?> callback) => new(callback);
+
+    /// <inheritdoc cref="Once(Func{object})"/>
+    public static OnceProp Once(Func<IServiceProvider, Task<object?>> callback) => new(callback);
+
+    // -- Prop factory methods (generic) --
+
+    /// <summary>
+    /// Creates a typed prop that is always included, even during partial reloads.
+    /// </summary>
+    public static AlwaysProp<T> Always<T>(T? value) => new(value);
+
+    /// <inheritdoc cref="Always(object?)"/>
+    public static AlwaysProp<T> Always<T>(Func<T?> callback) => new(callback);
+
+    /// <inheritdoc cref="Always(object?)"/>
+    public static AlwaysProp<T> Always<T>(Func<Task<T?>> callback) => new(callback);
+
+    /// <inheritdoc cref="Always(object?)"/>
+    public static AlwaysProp<T> Always<T>(Func<IServiceProvider, T?> callback) => new(callback);
+
+    /// <inheritdoc cref="Always(object?)"/>
+    public static AlwaysProp<T> Always<T>(Func<IServiceProvider, Task<T?>> callback) => new(callback);
+
+    /// <summary>
+    /// Creates a typed prop excluded from the initial load, included when explicitly requested.
+    /// </summary>
+    public static OptionalProp<T> Optional<T>(Func<T?> callback) => new(callback);
+
+    /// <inheritdoc cref="Optional(Func{object})"/>
+    public static OptionalProp<T> Optional<T>(Func<Task<T?>> callback) => new(callback);
+
+    /// <inheritdoc cref="Optional(Func{object})"/>
+    public static OptionalProp<T> Optional<T>(Func<IServiceProvider, T?> callback) => new(callback);
+
+    /// <inheritdoc cref="Optional(Func{object})"/>
+    public static OptionalProp<T> Optional<T>(Func<IServiceProvider, Task<T?>> callback) => new(callback);
+
+    /// <summary>
+    /// Creates a typed deferred prop loaded asynchronously after initial render.
+    /// </summary>
+    public static DeferProp<T> Defer<T>(Func<T?> callback, string? group = null) => new(callback, group);
+
+    /// <inheritdoc cref="Defer(Func{object}, string?)"/>
+    public static DeferProp<T> Defer<T>(Func<Task<T?>> callback, string? group = null) => new(callback, group);
+
+    /// <inheritdoc cref="Defer(Func{object}, string?)"/>
+    public static DeferProp<T> Defer<T>(Func<IServiceProvider, T?> callback, string? group = null) => new(callback, group);
+
+    /// <inheritdoc cref="Defer(Func{object}, string?)"/>
+    public static DeferProp<T> Defer<T>(Func<IServiceProvider, Task<T?>> callback, string? group = null) => new(callback, group);
+
+    /// <summary>
+    /// Creates a typed prop that merges with existing client-side data.
+    /// </summary>
+    public static MergeProp<T> Merge<T>(T? value) => new(value);
+
+    /// <inheritdoc cref="Merge(object?)"/>
+    public static MergeProp<T> Merge<T>(Func<T?> callback) => new(callback);
+
+    /// <inheritdoc cref="Merge(object?)"/>
+    public static MergeProp<T> Merge<T>(Func<Task<T?>> callback) => new(callback);
+
+    /// <inheritdoc cref="Merge(object?)"/>
+    public static MergeProp<T> Merge<T>(Func<IServiceProvider, T?> callback) => new(callback);
+
+    /// <inheritdoc cref="Merge(object?)"/>
+    public static MergeProp<T> Merge<T>(Func<IServiceProvider, Task<T?>> callback) => new(callback);
+
+    /// <summary>
+    /// Creates a typed prop resolved once and excluded on subsequent requests.
+    /// </summary>
+    public static OnceProp<T> Once<T>(Func<T?> callback) => new(callback);
+
+    /// <inheritdoc cref="Once(Func{object})"/>
+    public static OnceProp<T> Once<T>(Func<Task<T?>> callback) => new(callback);
+
+    /// <inheritdoc cref="Once(Func{object})"/>
+    public static OnceProp<T> Once<T>(Func<IServiceProvider, T?> callback) => new(callback);
+
+    /// <inheritdoc cref="Once(Func{object})"/>
+    public static OnceProp<T> Once<T>(Func<IServiceProvider, Task<T?>> callback) => new(callback);
+
+    // -- Scroll factory methods --
 
     /// <summary>
     /// Creates a scroll prop for infinite scroll patterns with pagination metadata.
@@ -209,9 +305,7 @@ public class InertiaResponseFactory : IInertiaResponseFactory
     public static ScrollProp<T> Scroll<T>(T? value, string wrapper = "data", IProvidesScrollMetadata? metadataProvider = null) =>
         new(value, wrapper, metadataProvider);
 
-    /// <summary>
-    /// Creates a scroll prop wrapping a callback.
-    /// </summary>
+    /// <inheritdoc cref="Scroll{T}(T, string, IProvidesScrollMetadata)"/>
     public static ScrollProp<T> Scroll<T>(Func<T?> callback, string wrapper = "data", IProvidesScrollMetadata? metadataProvider = null) =>
         new(callback, wrapper, metadataProvider);
 

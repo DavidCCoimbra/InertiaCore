@@ -1,7 +1,6 @@
 using InertiaCore.Constants;
 using InertiaCore.Context;
 using InertiaCore.Contracts;
-using InertiaCore.Props;
 using Microsoft.AspNetCore.Http;
 
 namespace InertiaCore.Core;
@@ -103,7 +102,7 @@ public sealed class PropsResolver
             return true;
         }
 
-        if (value is AlwaysProp)
+        if (value is IAlwaysIncluded)
         {
             return true;
         }

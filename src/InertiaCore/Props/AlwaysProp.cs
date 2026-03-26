@@ -5,7 +5,7 @@ namespace InertiaCore.Props;
 /// <summary>
 /// A typed prop that is always included, even during partial reloads.
 /// </summary>
-public class AlwaysProp<T> : IInertiaProp
+public class AlwaysProp<T> : IInertiaProp, IAlwaysIncluded
 {
     private readonly object? _value;
 
