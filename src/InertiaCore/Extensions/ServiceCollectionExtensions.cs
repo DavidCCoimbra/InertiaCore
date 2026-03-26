@@ -31,4 +31,15 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+
+    /// <summary>
+    /// Registers a shared props provider that runs on every Inertia request.
+    /// Multiple providers are supported and merged in registration order.
+    /// </summary>
+    public static IServiceCollection AddInertiaSharedProps<TProvider>(this IServiceCollection services)
+        where TProvider : class, Contracts.ISharedPropsProvider
+    {
+        services.AddScoped<Contracts.ISharedPropsProvider, TProvider>();
+        return services;
+    }
 }
