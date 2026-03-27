@@ -1,4 +1,5 @@
 using System.Text.Json;
+using InertiaCore.Attributes;
 using InertiaCore.Constants;
 using InertiaCore.Ssr;
 using Microsoft.AspNetCore.Http;
@@ -29,6 +30,8 @@ public partial class InertiaResponse : IActionResult, IResult
 
     private readonly InertiaResponseContext _context;
     private readonly Dictionary<string, object?> _viewData = new();
+    private readonly List<string>? _pageDataKeys;
+    private bool _forceInlinePageData;
 
     /// <summary>
     /// Initializes a new instance of <see cref="InertiaResponse"/>.
@@ -37,12 +40,14 @@ public partial class InertiaResponse : IActionResult, IResult
         string component,
         Dictionary<string, object?> props,
         Dictionary<string, object?> sharedProps,
-        InertiaResponseContext context)
+        InertiaResponseContext context,
+        List<string>? pageDataKeys = null)
     {
         Component = component;
         Props = props;
         SharedProps = sharedProps;
         _context = context;
+        _pageDataKeys = pageDataKeys;
     }
 
     /// <summary>
@@ -63,6 +68,15 @@ public partial class InertiaResponse : IActionResult, IResult
         return this;
     }
 
+    /// <summary>
+    /// Forces this response to inline all props in the HTML, bypassing async page data.
+    /// </summary>
+    public InertiaResponse WithInlinePageData()
+    {
+        _forceInlinePageData = true;
+        return this;
+    }
+
     /// <inheritdoc />
     public async Task ExecuteResultAsync(ActionContext context) =>
         await ExecuteAsync(context.HttpContext);
@@ -73,7 +87,7 @@ public partial class InertiaResponse : IActionResult, IResult
         ConsumeFlashIntoSharedProps();
 
         var resolver = new PropsResolver(httpContext.RequestServices, httpContext.Request, Component);
-        var (resolvedProps, metadata) = await resolver.ResolveAsync(SharedProps, Props).ConfigureAwait(false);
+        var (resolvedProps, metadata) = await resolver.ResolveAsync(SharedProps, Props, _pageDataKeys).ConfigureAwait(false);
 
         var page = BuildPageObject(httpContext, resolvedProps, metadata);
 
@@ -166,6 +180,18 @@ public partial class InertiaResponse : IActionResult, IResult
         {
             viewData["InertiaHead"] = ssrResponse.Head;
             viewData["InertiaBody"] = ssrResponse.Body;
+
+            var useAsyncPageData = _context.AsyncPageData
+                && !_forceInlinePageData
+                && !HasInlinePageDataAttribute(httpContext);
+
+            if (useAsyncPageData)
+            {
+                var cache = httpContext.RequestServices.GetRequiredService<IPageDataCache>();
+                var identity = _context.ResolvePageDataIdentity?.Invoke(httpContext);
+                var hash = cache.Store(page, identity);
+                viewData["AsyncPageDataUrl"] = $"{_context.AsyncPageDataPath}/{hash}";
+            }
         }
 
         foreach (var (key, value) in _viewData)
@@ -219,6 +245,12 @@ public partial class InertiaResponse : IActionResult, IResult
         var path = httpContext.Request.Path.Value ?? "/";
         return _context.SsrExcludedPaths!.Any(excluded =>
             path.StartsWith(excluded, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool HasInlinePageDataAttribute(HttpContext httpContext)
+    {
+        var endpoint = httpContext.GetEndpoint();
+        return endpoint?.Metadata.GetMetadata<InertiaInlinePageDataAttribute>() != null;
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "SSR rendering failed unexpectedly, falling back to CSR")]

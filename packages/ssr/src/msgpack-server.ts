@@ -4,6 +4,7 @@ import { decode } from '@msgpack/msgpack';
 import type { Page, RenderFunction, SsrResponse, ServerOptions } from './types.js';
 
 const DEFAULT_SOCKET_PATH = '/tmp/inertia-ssr.sock';
+const MAX_MESSAGE_SIZE = 10 * 1024 * 1024; // 10MB
 
 /**
  * Creates an SSR server that receives MessagePack-encoded page objects
@@ -32,32 +33,37 @@ export function createMsgpackServer(
         connection.on('data', async (chunk: Buffer) => {
             buffer = Buffer.concat([buffer, chunk]);
 
-            // Wait for at least the 4-byte length prefix
-            if (buffer.length < 4) return;
+            // Process all complete messages in the buffer
+            while (buffer.length >= 4) {
+                const messageLength = buffer.readInt32LE(0);
 
-            const messageLength = buffer.readInt32LE(0);
-            if (buffer.length < 4 + messageLength) return;
+                // Guard against malformed or oversized messages
+                if (messageLength <= 0 || messageLength > MAX_MESSAGE_SIZE) {
+                    console.error(`[inertiacore/ssr] Invalid message length: ${messageLength}`);
+                    buffer = Buffer.alloc(0);
+                    connection.destroy();
+                    return;
+                }
 
-            // Extract the MessagePack payload
-            const payload = buffer.subarray(4, 4 + messageLength);
-            buffer = buffer.subarray(4 + messageLength);
+                // Wait for the full payload to arrive
+                if (buffer.length < 4 + messageLength) return;
 
-            try {
-                // Decode MessagePack → JavaScript object
-                const page = decode(payload) as Page;
+                const payload = buffer.subarray(4, 4 + messageLength);
+                buffer = buffer.subarray(4 + messageLength);
 
-                // Render the component (same render function as standard SSR)
-                const result: SsrResponse = await render(page);
+                try {
+                    const page = decode(payload) as Page;
+                    const result: SsrResponse = await render(page);
+                    sendResponse(connection, result);
+                } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    console.error(`[inertiacore/ssr] Render error: ${message}`);
 
-                sendResponse(connection, result);
-            } catch (error) {
-                const message = error instanceof Error ? error.message : String(error);
-                console.error(`[inertiacore/ssr] Render error: ${message}`);
-
-                sendResponse(connection, {
-                    head: [],
-                    body: '',
-                });
+                    sendResponse(connection, {
+                        head: [],
+                        body: '',
+                    });
+                }
             }
         });
 

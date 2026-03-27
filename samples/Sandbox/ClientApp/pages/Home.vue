@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { usePage } from '@inertiajs/vue3'
+
 defineProps<{
     title: string
     message: string
 }>()
+
+const page = usePage()
 </script>
 
 <template>
@@ -17,5 +21,8 @@ defineProps<{
                 Test Props →
             </a>
         </div>
+        <footer class="fixed bottom-4 text-center text-xs text-gray-400">
+            {{ page.props.appName }} &copy; {{ page.props.year }}
+        </footer>
     </div>
 </template>

@@ -1,9 +1,12 @@
 import { createApp, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
-import { resolvePageComponent } from '@inertiacore/vite/inertia-helpers'
+import { resolvePageComponent, resolvePageData } from '@inertiacore/vite/inertia-helpers'
 import './app.css'
 
+const initialPage = await resolvePageData()
+
 createInertiaApp({
+    page: initialPage,
     resolve: name => resolvePageComponent(
         `./pages/${name}.vue`,
         import.meta.glob('./pages/**/*.vue'),

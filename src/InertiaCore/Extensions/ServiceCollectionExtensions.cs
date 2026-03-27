@@ -36,6 +36,9 @@ public static class ServiceCollectionExtensions
         // AddInertiaEmbeddedV8() from companion packages to override.
         services.AddHttpClient<ISsrGateway, HttpSsrGateway>();
 
+        // Async page data cache — stores page objects for parallel fetch
+        services.AddSingleton<IPageDataCache, PageDataCache>();
+
         // Auto-validation: register MVC filter that redirects Inertia requests with errors
         services.AddTransient<IConfigureOptions<MvcOptions>>(sp =>
         {

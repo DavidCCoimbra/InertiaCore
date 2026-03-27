@@ -6,6 +6,7 @@ namespace InertiaCore.Core;
 internal sealed class PropMetadataCollector
 {
     private readonly List<string> _sharedPropKeys = [];
+    private readonly List<string> _pageDataProps = [];
     private readonly Dictionary<string, List<string>> _deferredProps = [];
     private readonly List<string> _mergeProps = [];
     private readonly List<string> _deepMergeProps = [];
@@ -15,6 +16,8 @@ internal sealed class PropMetadataCollector
 
     public void TrackSharedKeys(IEnumerable<string> keys) =>
         _sharedPropKeys.AddRange(keys);
+
+    public void AddPageData(string key) => _pageDataProps.Add(key);
 
     public void AddDeferred(string group, string path)
     {
@@ -81,6 +84,11 @@ internal sealed class PropMetadataCollector
         if (_sharedPropKeys.Count > 0)
         {
             metadata["sharedProps"] = _sharedPropKeys;
+        }
+
+        if (_pageDataProps.Count > 0)
+        {
+            metadata["pageDataProps"] = _pageDataProps;
         }
 
         return metadata;

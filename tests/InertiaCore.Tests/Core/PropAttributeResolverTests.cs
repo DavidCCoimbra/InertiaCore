@@ -621,6 +621,47 @@ public class PropAttributeResolverTests
         Assert.True(prop.Timed.IsTimed());
     }
 
+    // -- [InertiaPageData] --
+
+    [Fact]
+    public void PageData_attribute_tracked_in_pageDataKeys()
+    {
+        var pageDataKeys = new List<string>();
+        PropAttributeResolver.ConvertToPropsDict(new PageDataProps("Alice", "heavy-data"), pageDataKeys);
+
+        Assert.Single(pageDataKeys);
+        Assert.Equal("user", pageDataKeys[0]);
+    }
+
+    [Fact]
+    public async Task PageData_attribute_not_tracked_when_list_is_null()
+    {
+        // Should not throw
+        var dict = PropAttributeResolver.ConvertToPropsDict(new PageDataProps("Alice", "heavy-data"));
+
+        var result = await ((IInertiaProp)dict["user"]!).ResolveAsync(null!);
+        Assert.Equal("Alice", result);
+    }
+
+    [Fact]
+    public void PageData_attribute_combines_with_always()
+    {
+        var pageDataKeys = new List<string>();
+        var dict = PropAttributeResolver.ConvertToPropsDict(new PageDataProps("Alice", "heavy-data"), pageDataKeys);
+
+        Assert.IsType<AlwaysProp>(dict["user"]);
+        Assert.Contains("user", pageDataKeys);
+    }
+
+    [Fact]
+    public void PageData_attribute_not_tracked_for_props_without_it()
+    {
+        var pageDataKeys = new List<string>();
+        PropAttributeResolver.ConvertToPropsDict(new PageDataProps("Alice", "heavy-data"), pageDataKeys);
+
+        Assert.DoesNotContain("stats", pageDataKeys);
+    }
+
     // -- Test records: single attributes --
 
     private record PlainProps(string Name, int Age);
@@ -756,4 +797,10 @@ public class PropAttributeResolverTests
 
     private record TimedDeferProps(
         [property: InertiaDefer][property: InertiaTimed(IntervalSeconds = 5)] string Price);
+
+    // -- Test records: page data --
+
+    private record PageDataProps(
+        [property: InertiaAlways][property: InertiaPageData] string User,
+        [property: InertiaDefer] string Stats);
 }

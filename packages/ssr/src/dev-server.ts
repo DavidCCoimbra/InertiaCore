@@ -111,12 +111,24 @@ export async function createDevServer(options: DevServerOptions = {}): Promise<h
 
         // SSR render endpoint
         if (req.method === 'POST' && req.url === '/render') {
-            let body = '';
+            const chunks: Buffer[] = [];
+            let bodySize = 0;
+            const maxBodySize = 10 * 1024 * 1024; // 10MB
 
-            req.on('data', (chunk: Buffer) => { body += chunk.toString(); });
+            req.on('data', (chunk: Buffer) => {
+                bodySize += chunk.length;
+                if (bodySize > maxBodySize) {
+                    res.writeHead(413, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ head: [], body: '' }));
+                    req.destroy();
+                    return;
+                }
+                chunks.push(chunk);
+            });
 
             req.on('end', async () => {
                 try {
+                    const body = Buffer.concat(chunks).toString('utf-8');
                     const page: Page = JSON.parse(body);
 
                     // Re-load the module to pick up any changes Vite has invalidated

@@ -1,3 +1,4 @@
+using InertiaCore.Configuration;
 using InertiaCore.Core;
 using InertiaCore.Filters;
 using InertiaCore.Ssr;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace InertiaCore.Extensions;
 
@@ -70,6 +72,35 @@ public static class EndpointRouteBuilderExtensions
             return healthy
                 ? Results.Ok(new { status = "healthy" })
                 : Results.Json(new { status = "unhealthy" }, statusCode: 503);
+        });
+    }
+
+    /// <summary>
+    /// Maps the async page data endpoint that serves cached page props for hydration.
+    /// Required when <c>SsrOptions.AsyncPageData</c> is enabled.
+    /// </summary>
+    public static IEndpointConventionBuilder MapInertiaPageData(
+        this IEndpointRouteBuilder endpoints,
+        string pattern = "/inertia/page-data/{hash}")
+    {
+        return endpoints.MapGet(pattern, async (string hash, HttpContext context) =>
+        {
+            var cache = context.RequestServices.GetRequiredService<IPageDataCache>();
+            var options = context.RequestServices.GetRequiredService<IOptions<InertiaOptions>>().Value;
+            var identity = options.Ssr.ResolvePageDataIdentity(context);
+            var jsonBytes = cache.TryGetBytes(hash, identity);
+
+            if (jsonBytes == null)
+            {
+                context.Response.StatusCode = StatusCodes.Status404NotFound;
+                return;
+            }
+
+            context.Response.ContentType = "application/json";
+            context.Response.Headers.CacheControl = "no-store";
+            context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+            context.Response.Headers["X-Robots-Tag"] = "noindex";
+            await context.Response.Body.WriteAsync(jsonBytes);
         });
     }
 

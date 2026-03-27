@@ -19,7 +19,7 @@ internal static class PropAttributeResolver
     /// Converts an object's properties to a dictionary, wrapping values based on Inertia attributes.
     /// If a value is already an IInertiaProp, attributes are skipped (explicit wins).
     /// </summary>
-    public static Dictionary<string, object?> ConvertToPropsDict(object props)
+    public static Dictionary<string, object?> ConvertToPropsDict(object props, List<string>? pageDataKeys = null)
     {
         var type = props.GetType();
         var properties = s_cache.GetOrAdd(type, ResolveProperties);
@@ -42,6 +42,11 @@ internal static class PropAttributeResolver
             dict[key] = value is IInertiaProp
                 ? value
                 : prop.HasAttributes ? WrapValue(prop, value) : value;
+
+            if (prop.PageData is not null)
+            {
+                pageDataKeys?.Add(key);
+            }
         }
 
         return dict;
@@ -65,7 +70,8 @@ internal static class PropAttributeResolver
                 property.GetCustomAttribute<InertiaLiveAttribute>(),
                 property.GetCustomAttribute<InertiaWhenAttribute>(),
                 property.GetCustomAttribute<InertiaFallbackAttribute>(),
-                property.GetCustomAttribute<InertiaTimedAttribute>());
+                property.GetCustomAttribute<InertiaTimedAttribute>(),
+                property.GetCustomAttribute<InertiaPageDataAttribute>());
 
             ValidateAttributes(info, type);
             result[i] = info;
@@ -266,7 +272,8 @@ internal static class PropAttributeResolver
         InertiaLiveAttribute? Live,
         InertiaWhenAttribute? When,
         InertiaFallbackAttribute? Fallback,
-        InertiaTimedAttribute? Timed)
+        InertiaTimedAttribute? Timed,
+        InertiaPageDataAttribute? PageData = null)
     {
         public bool HasAttributes =>
             Always is not null || Defer is not null || Merge is not null ||

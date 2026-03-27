@@ -11,6 +11,17 @@ namespace InertiaCore.Tests.Extensions;
 public class ServiceCollectionExtensionsTests
 {
     [Fact]
+    public void Registers_PageDataCache_as_singleton()
+    {
+        var services = new ServiceCollection();
+
+        services.AddInertia();
+
+        var descriptor = services.Single(s => s.ServiceType == typeof(IPageDataCache));
+        Assert.Equal(ServiceLifetime.Singleton, descriptor.Lifetime);
+    }
+
+    [Fact]
     public void Registers_InertiaResponseFactory_as_scoped()
     {
         var services = new ServiceCollection();

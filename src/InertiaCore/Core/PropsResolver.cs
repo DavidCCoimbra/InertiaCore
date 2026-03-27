@@ -52,10 +52,19 @@ public sealed class PropsResolver
     /// </summary>
     public async Task<(Dictionary<string, object?> Props, Dictionary<string, object?> Metadata)> ResolveAsync(
         Dictionary<string, object?> sharedProps,
-        Dictionary<string, object?> pageProps)
+        Dictionary<string, object?> pageProps,
+        List<string>? pageDataKeys = null)
     {
         var merged = new Dictionary<string, object?>(sharedProps);
         _metadata.TrackSharedKeys(sharedProps.Keys);
+
+        if (pageDataKeys is { Count: > 0 })
+        {
+            foreach (var key in pageDataKeys)
+            {
+                _metadata.AddPageData(key);
+            }
+        }
 
         foreach (var (key, value) in pageProps)
         {

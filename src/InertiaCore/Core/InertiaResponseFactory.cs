@@ -10,7 +10,7 @@ namespace InertiaCore.Core;
 /// <summary>
 /// Scoped service that orchestrates Inertia responses. One instance per HTTP request.
 /// </summary>
-public class InertiaResponseFactory : IInertiaResponseFactory
+public sealed class InertiaResponseFactory : IInertiaResponseFactory
 {
     private readonly InertiaOptions _options;
     private readonly IInertiaFlashService _flashService;
@@ -42,7 +42,10 @@ public class InertiaResponseFactory : IInertiaResponseFactory
     /// <summary>
     /// Creates an <see cref="InertiaResponse"/> for the given component and props dictionary.
     /// </summary>
-    public InertiaResponse Render(string component, Dictionary<string, object?>? props = null)
+    public InertiaResponse Render(string component, Dictionary<string, object?>? props = null) =>
+        Render(component, props, pageDataKeys: null);
+
+    private InertiaResponse Render(string component, Dictionary<string, object?>? props, List<string>? pageDataKeys)
     {
         var context = new InertiaResponseContext(
             RootView: _rootView,
@@ -52,17 +55,24 @@ public class InertiaResponseFactory : IInertiaResponseFactory
             SsrExcludedPaths: _options.Ssr.ExcludedPaths,
             EncryptHistory: _encryptHistory ?? _options.EncryptHistory,
             ClearHistory: _clearHistory,
-            PreserveFragment: _preserveFragment);
+            PreserveFragment: _preserveFragment,
+            AsyncPageData: _options.Ssr.AsyncPageData && _options.Ssr.Enabled,
+            AsyncPageDataPath: _options.Ssr.AsyncPageDataPath,
+            ResolvePageDataIdentity: _options.Ssr.ResolvePageDataIdentity);
 
         return new InertiaResponse(component, props ?? new(),
-            new Dictionary<string, object?>(_sharedProps), context);
+            new Dictionary<string, object?>(_sharedProps), context, pageDataKeys);
     }
 
     /// <summary>
     /// Creates an <see cref="InertiaResponse"/> for the given component and anonymous object props.
     /// </summary>
-    public InertiaResponse Render(string component, object props) =>
-        Render(component, ConvertToPropsDict(props));
+    public InertiaResponse Render(string component, object props)
+    {
+        var pageDataKeys = new List<string>();
+        var dict = PropAttributeResolver.ConvertToPropsDict(props, pageDataKeys);
+        return Render(component, dict, pageDataKeys);
+    }
 
     /// <summary>
     /// Creates an <see cref="InertiaResponse"/> for the given component and strongly-typed props.

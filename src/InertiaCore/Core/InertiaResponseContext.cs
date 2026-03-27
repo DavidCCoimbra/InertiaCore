@@ -1,4 +1,5 @@
 using InertiaCore.Ssr;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace InertiaCore.Core;
@@ -15,4 +16,7 @@ public record InertiaResponseContext(
     bool EncryptHistory = false,
     bool ClearHistory = false,
     bool PreserveFragment = false,
+    bool AsyncPageData = false,
+    string? AsyncPageDataPath = null,
+    Func<HttpContext, string?>? ResolvePageDataIdentity = null,
     ILogger? Logger = null);

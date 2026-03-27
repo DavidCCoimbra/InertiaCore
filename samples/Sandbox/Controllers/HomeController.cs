@@ -1,4 +1,5 @@
 using InertiaCore;
+using InertiaCore.Attributes;
 using InertiaCore.Core;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,6 +8,7 @@ namespace Sandbox.Controllers;
 public sealed class HomeController(IInertiaResponseFactory inertia) : Controller
 {
     [HttpGet("/")]
+    [InertiaInlinePageData]
     public IActionResult Index()
     {
         return inertia.Render("Home", new

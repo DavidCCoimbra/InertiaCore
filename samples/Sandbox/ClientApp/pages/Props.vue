@@ -3,6 +3,8 @@ defineProps<{
     always: string
     deferred?: string
     merged?: string[]
+    appName: string
+    year: number
 }>()
 </script>
 
@@ -31,6 +33,10 @@ defineProps<{
             <a href="/" class="mt-8 inline-block text-sm text-indigo-600 hover:text-indigo-800">
                 ← Back home
             </a>
+
+            <footer class="mt-8 text-center text-xs text-gray-400">
+                {{ appName }} &copy; {{ year }}
+            </footer>
         </div>
     </div>
 </template>
