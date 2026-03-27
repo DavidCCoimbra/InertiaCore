@@ -7,7 +7,9 @@ export default defineConfig({
     plugins: [
         dotnetVite({
             input: ['ClientApp/app.ts'],
+            ssr: 'ClientApp/ssr.ts',
             refresh: true,
+            ssrDev: true,
         }),
         tailwindcss(),
         vue(),

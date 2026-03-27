@@ -19,7 +19,7 @@ public class ViteManifestReaderTests : IDisposable
     {
         _tempDir = Path.Combine(Path.GetTempPath(), $"vite-test-{Guid.NewGuid():N}");
         _webRoot = Path.Combine(_tempDir, "wwwroot");
-        Directory.CreateDirectory(Path.Combine(_webRoot, "build", ".vite"));
+        Directory.CreateDirectory(Path.Combine(_webRoot, "build"));
     }
 
     [Fact]
@@ -230,7 +230,7 @@ public class ViteManifestReaderTests : IDisposable
     [Fact]
     public void Throws_on_invalid_manifest_json()
     {
-        var manifestPath = Path.Combine(_webRoot, "build", ".vite", "manifest.json");
+        var manifestPath = Path.Combine(_webRoot, "build", "manifest.json");
         Directory.CreateDirectory(Path.GetDirectoryName(manifestPath)!);
         File.WriteAllText(manifestPath, "null");
 
@@ -292,7 +292,7 @@ public class ViteManifestReaderTests : IDisposable
 
     private void WriteManifest(Dictionary<string, ManifestEntry> manifest)
     {
-        var path = Path.Combine(_webRoot, "build", ".vite", "manifest.json");
+        var path = Path.Combine(_webRoot, "build", "manifest.json");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, JsonSerializer.Serialize(manifest));
     }

@@ -29,6 +29,15 @@ export interface DotnetVitePluginConfig {
     launcher?: boolean | LauncherConfig
     /** Proxy WebSocket connections for SignalR hubs. @default true */
     signalR?: boolean | SignalRConfig
+    /** Run SSR sidecar during development. Builds SSR bundle and starts Node.js server. @default false */
+    ssrDev?: boolean | SsrDevConfig
+}
+
+export interface SsrDevConfig {
+    /** SSR sidecar script path. @default 'dist/ssr/ssr.js' */
+    script?: string
+    /** Port the SSR sidecar listens on. @default 13714 */
+    port?: number
 }
 
 export interface ProxyConfig {
@@ -113,6 +122,7 @@ export function resolveDotnetVitePluginConfig(config: string | string[] | Dotnet
         proxy: config.proxy ?? true,
         launcher: config.launcher ?? true,
         signalR: config.signalR ?? true,
+        ssrDev: config.ssrDev ?? false,
     }
 }
 

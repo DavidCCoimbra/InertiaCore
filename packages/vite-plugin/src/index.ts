@@ -22,10 +22,10 @@ import {
 } from './server.js'
 
 import { resolveAppUrl } from './dotnet.js'
-import { startDotnetServer, bindDotnetExitHandlers } from './launcher.js'
+import { startDotnetServer, startSsrSidecar, bindDotnetExitHandlers } from './launcher.js'
 
 // Re-export types and utilities for external use
-export type { DotnetVitePluginConfig, RefreshConfig, DevServerUrl, ProxyConfig, LauncherConfig, SignalRConfig } from './config.js'
+export type { DotnetVitePluginConfig, RefreshConfig, DevServerUrl, ProxyConfig, LauncherConfig, SignalRConfig, SsrDevConfig } from './config.js'
 export { refreshPaths } from './config.js'
 export { writeHotFile, bindExitHandlers } from './server.js'
 
@@ -92,8 +92,14 @@ function resolveDotnetPlugin(pluginConfig: Required<DotnetVitePluginConfig>): Do
             // Launch .NET server if configured (detects port conflicts)
             if (pluginConfig.launcher !== false) {
                 startDotnetServer(pluginConfig.launcher, server.config.logger, appUrl)
-                bindDotnetExitHandlers()
             }
+
+            // Launch SSR sidecar if configured
+            if (pluginConfig.ssrDev !== false) {
+                startSsrSidecar(pluginConfig.ssrDev, server.config.logger)
+            }
+
+            bindDotnetExitHandlers()
 
             server.httpServer?.once('listening', () => {
                 viteDevServerUrl = resolveListeningServerUrl(server, userConfig)

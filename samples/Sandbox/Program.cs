@@ -9,6 +9,7 @@ builder.Services.AddControllersWithViews()
 builder.Services.AddInertia(options =>
 {
     options.Version = "1.0.0";
+    options.Ssr.Enabled = true;
 });
 
 builder.Services.AddVite(options =>

@@ -8,7 +8,7 @@ public class ViteOptions
     /// <summary>
     /// Path to the Vite manifest file, relative to wwwroot.
     /// </summary>
-    public string ManifestPath { get; set; } = "build/.vite/manifest.json";
+    public string ManifestPath { get; set; } = "build/manifest.json";
 
     /// <summary>
     /// Path to the hot file written by the Vite dev server, relative to wwwroot.
