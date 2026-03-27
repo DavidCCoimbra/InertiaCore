@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "paths": { "@/*": ["./ClientApp/*"] },
+        "types": ["vite/client"],
+        "strict": true,
+        "noEmit": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true
+    },
+    "include": ["ClientApp/**/*.ts", "ClientApp/**/*.vue"]
+}

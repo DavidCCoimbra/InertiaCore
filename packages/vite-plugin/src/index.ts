@@ -98,7 +98,7 @@ function resolveDotnetPlugin(pluginConfig: Required<DotnetVitePluginConfig>): Do
             server.httpServer?.once('listening', () => {
                 viteDevServerUrl = resolveListeningServerUrl(server, userConfig)
                 writeHotFile(pluginConfig.hotFile, viteDevServerUrl, server.config.base)
-                logServerStart(server, appUrl)
+                logServerStart(server, appUrl, `${viteDevServerUrl}${server.config.base}`)
             })
 
             bindExitHandlers(pluginConfig.hotFile)

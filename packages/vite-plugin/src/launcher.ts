@@ -1,4 +1,4 @@
-import { spawn, exec, type ChildProcess } from 'child_process'
+import { spawn, type ChildProcess } from 'child_process'
 import { createConnection } from 'net'
 import colors from 'picocolors'
 import type { LauncherConfig } from './config.js'
@@ -63,7 +63,6 @@ export async function startDotnetServer(
     dotnetProcess = spawn(command, args, {
         cwd,
         stdio: ['ignore', 'pipe', 'pipe'],
-        shell: true,
         env: {
             ...process.env,
             DOTNET_WATCH_SUPPRESS_LAUNCH_BROWSER: '1',
@@ -132,14 +131,3 @@ export function bindDotnetExitHandlers(): void {
     process.on('SIGTERM', () => { cleanup(); process.exit() })
 }
 
-/**
- * Open the browser to the app URL.
- */
-export function openBrowser(url: string): void {
-    const platform = process.platform
-    const command = platform === 'darwin' ? 'open'
-        : platform === 'win32' ? 'start'
-        : 'xdg-open'
-
-    exec(`${command} ${url}`)
-}

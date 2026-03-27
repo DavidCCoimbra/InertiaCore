@@ -6,7 +6,6 @@ import colors from 'picocolors'
 import { UserConfig, ResolvedConfig, defaultAllowedOrigins, createLogger } from 'vite'
 import type { DevServerUrl, ProxyConfig, SignalRConfig } from './config.js'
 import { resolveHttpsDevCert, detectDotnetWatch, resolveAppUrl } from './dotnet.js'
-import { openBrowser } from './launcher.js'
 
 const logger = createLogger('info', {
     prefix: '[@inertiacore/vite]'
@@ -140,9 +139,8 @@ export function bindExitHandlers(hotFile: string): void {
 
 /**
  * Log the plugin banner on server start. Pings the .NET server to show live status.
- * Shows environment badge, auto-opens browser when ready.
  */
-export function logServerStart(server: import('vite').ViteDevServer, appUrl?: string): void {
+export function logServerStart(server: import('vite').ViteDevServer, appUrl?: string, viteUrl?: string): void {
     setTimeout(async () => {
         const log = server.config.logger
         const net = (s: string) => `\x1b[38;2;204;110;212m${s}\x1b[0m`
@@ -152,14 +150,14 @@ export function logServerStart(server: import('vite').ViteDevServer, appUrl?: st
         log.info('')
         log.info(`  ${net(colors.bold('ASP.NET Core'))}  ${colors.dim('plugin')} ${version ? colors.bold(`v${version}`) : ''}  ${formatEnvironment(env)}`)
 
+        if (viteUrl) {
+            log.info(`  ${net('➜')}  ${net(colors.bold('Vite'))}:  ${colors.cyan(viteUrl)}`)
+        }
+
         if (appUrl) {
             const status = await pingServer(appUrl)
             const statusIcon = status ? colors.green('✓ running') : colors.yellow('⏳ waiting')
-            log.info(`  ${net('➜')}  ${net(colors.bold('App'))}:  ${colors.cyan(appUrl)}  ${statusIcon}`)
-
-            if (status) {
-                openBrowser(appUrl)
-            }
+            log.info(`  ${net('➜')}  ${net(colors.bold('App'))}:   ${colors.cyan(appUrl)}  ${statusIcon}`)
         }
 
         detectDotnetWatch(server)
@@ -204,7 +202,7 @@ async function pingServer(url: string): Promise<boolean> {
 /** Poll for the .NET server to come online, log when it does, and open browser. */
 function pollForServer(server: import('vite').ViteDevServer, appUrl: string): void {
     let attempts = 0
-    const maxAttempts = 30
+    const maxAttempts = 60
 
     const interval = setInterval(async () => {
         attempts++
@@ -215,9 +213,8 @@ function pollForServer(server: import('vite').ViteDevServer, appUrl: string): vo
             clearInterval(interval)
             const net = (s: string) => `\x1b[38;2;204;110;212m${s}\x1b[0m`
             server.config.logger.info(
-                `  ${net('➜')}  ${net(colors.bold('App'))}:  ${colors.cyan(appUrl)}  ${colors.green('✓ running')}`
+                `  ${net('➜')}  ${net(colors.bold('App'))}:   ${colors.cyan(appUrl)}  ${colors.green('✓ running')}`
             )
-            openBrowser(appUrl)
         }
     }, 1000)
 }

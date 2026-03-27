@@ -41,7 +41,7 @@
         "build": "npm run build-plugin && npm run build-inertia-helpers",
         "build-plugin": "rm -rf dist && npm run build-plugin-types && npm run build-plugin-esm && cp src/dev-server-index.html dist/",
         "build-plugin-types": "tsc --emitDeclarationOnly",
-        "build-plugin-esm": "esbuild src/index.ts --platform=node --format=esm --outfile=dist/index.js",
+        "build-plugin-esm": "esbuild src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.js --external:vite --external:picocolors --external:vite-plugin-full-reload --external:fs --external:path --external:net --external:child_process --external:url",
         "build-inertia-helpers": "rm -rf inertia-helpers && tsc --project tsconfig.inertia-helpers.json",
         "lint": "eslint --ext .ts ./src ./tests",
         "test": "vitest run"
