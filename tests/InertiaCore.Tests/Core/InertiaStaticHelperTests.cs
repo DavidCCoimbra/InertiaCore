@@ -36,7 +36,7 @@ public class InertiaStaticHelperTests
 
         var response = Inertia.Render("Test", new TestProps("Alice", 30));
 
-        Assert.Equal("Alice", response.Props["Name"]);
+        Assert.Equal("Alice", response.Props["name"]);
     }
 
     [Fact]

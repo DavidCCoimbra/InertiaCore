@@ -35,7 +35,7 @@ public class InertiaRequestTests : IClassFixture<TestWebAppFactory>
         Assert.Equal("Home/Index", page.GetProperty("component").GetString());
         Assert.Equal("/", page.GetProperty("url").GetString());
         Assert.Equal("1.0.0", page.GetProperty("version").GetString());
-        Assert.Equal("Hello from Inertia!", page.GetProperty("props").GetProperty("Greeting").GetString());
+        Assert.Equal("Hello from Inertia!", page.GetProperty("props").GetProperty("greeting").GetString());
     }
 
     [Fact]

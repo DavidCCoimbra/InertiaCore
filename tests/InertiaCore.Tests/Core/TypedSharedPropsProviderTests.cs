@@ -19,8 +19,8 @@ public class TypedSharedPropsProviderTests
 
         var result = provider.GetSharedProps(context);
 
-        Assert.Equal("MyApp", result["AppName"]);
-        Assert.Equal("en", result["Locale"]);
+        Assert.Equal("MyApp", result["appName"]);
+        Assert.Equal("en", result["locale"]);
     }
 
     [Fact]
@@ -36,8 +36,8 @@ public class TypedSharedPropsProviderTests
 
         var result = provider.GetSharedProps(context);
 
-        Assert.IsType<AlwaysProp>(result["AppName"]);
-        Assert.IsType<OnceProp>(result["Permissions"]);
+        Assert.IsType<AlwaysProp>(result["appName"]);
+        Assert.IsType<OnceProp>(result["permissions"]);
     }
 
     [Fact]
@@ -74,8 +74,8 @@ public class TypedSharedPropsProviderTests
 
         var result = provider.GetSharedProps(context);
 
-        Assert.Null(result["AppName"]);
-        Assert.Null(result["Locale"]);
+        Assert.Null(result["appName"]);
+        Assert.Null(result["locale"]);
     }
 
     private class SharedProps

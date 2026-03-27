@@ -28,7 +28,7 @@ public class MapInertiaTests : IClassFixture<TestWebAppFactory>
     {
         var inertia = await _client.GetInertiaAssertAsync("/about", "1.0.0");
 
-        inertia.HasProp("Title", "About Us");
+        inertia.HasProp("title", "About Us");
     }
 
     [Fact]

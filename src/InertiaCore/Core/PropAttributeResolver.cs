@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Text.Json;
 using InertiaCore.Attributes;
 using InertiaCore.Contracts;
 using InertiaCore.Props;
@@ -27,7 +28,8 @@ internal static class PropAttributeResolver
         foreach (var prop in properties)
         {
             var value = prop.Property.GetValue(props);
-            dict[prop.Property.Name] = value is IInertiaProp
+            var key = JsonNamingPolicy.CamelCase.ConvertName(prop.Property.Name);
+            dict[key] = value is IInertiaProp
                 ? value
                 : prop.HasAttributes ? WrapValue(prop, value) : value;
         }

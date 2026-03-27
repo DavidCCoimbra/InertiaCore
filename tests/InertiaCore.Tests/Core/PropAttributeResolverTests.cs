@@ -17,8 +17,8 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new PlainProps("Alice", 30));
 
-        Assert.Equal("Alice", dict["Name"]);
-        Assert.Equal(30, dict["Age"]);
+        Assert.Equal("Alice", dict["name"]);
+        Assert.Equal(30, dict["age"]);
     }
 
     // -- [InertiaAlways] --
@@ -28,14 +28,14 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new AlwaysProps("Alice"));
 
-        Assert.IsType<AlwaysProp>(dict["Name"]);
+        Assert.IsType<AlwaysProp>(dict["name"]);
     }
 
     [Fact]
     public async Task Always_attribute_resolves_to_original_value()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new AlwaysProps("Alice"));
-        var prop = (IInertiaProp)dict["Name"]!;
+        var prop = (IInertiaProp)dict["name"]!;
 
         var result = await prop.ResolveAsync(Substitute.For<IServiceProvider>());
 
@@ -49,14 +49,14 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeferProps("heavy-data"));
 
-        Assert.IsType<DeferProp>(dict["Stats"]);
+        Assert.IsType<DeferProp>(dict["stats"]);
     }
 
     [Fact]
     public void Defer_attribute_sets_group()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeferProps("heavy-data"));
-        var prop = (DeferProp)dict["Stats"]!;
+        var prop = (DeferProp)dict["stats"]!;
 
         Assert.Equal("analytics", prop.Defer.Group());
     }
@@ -65,7 +65,7 @@ public class PropAttributeResolverTests
     public void Defer_attribute_default_group()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeferDefaultGroupProps("data"));
-        var prop = (DeferProp)dict["Data"]!;
+        var prop = (DeferProp)dict["data"]!;
 
         Assert.Equal("default", prop.Defer.Group());
     }
@@ -75,7 +75,7 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeferProps("heavy-data"));
 
-        Assert.IsAssignableFrom<IIgnoreFirstLoad>(dict["Stats"]);
+        Assert.IsAssignableFrom<IIgnoreFirstLoad>(dict["stats"]);
     }
 
     // -- [InertiaMerge] --
@@ -85,14 +85,14 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new MergeProps(new[] { 1, 2, 3 }));
 
-        Assert.IsType<MergeProp>(dict["Items"]);
+        Assert.IsType<MergeProp>(dict["items"]);
     }
 
     [Fact]
     public void Merge_attribute_enables_merge()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new MergeProps(new[] { 1, 2, 3 }));
-        var prop = (MergeProp)dict["Items"]!;
+        var prop = (MergeProp)dict["items"]!;
 
         Assert.True(prop.Merge.ShouldMerge());
     }
@@ -101,7 +101,7 @@ public class PropAttributeResolverTests
     public void Merge_deep_attribute_enables_deep_merge()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeepMergeProps(new { Theme = "dark" }));
-        var prop = (MergeProp)dict["Config"]!;
+        var prop = (MergeProp)dict["config"]!;
 
         Assert.True(prop.Merge.ShouldDeepMerge());
     }
@@ -110,7 +110,7 @@ public class PropAttributeResolverTests
     public void Merge_prepend_attribute_enables_prepend()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new PrependMergeProps(new[] { 1, 2 }));
-        var prop = (MergeProp)dict["Items"]!;
+        var prop = (MergeProp)dict["items"]!;
 
         Assert.True(prop.Merge.ShouldPrependAtRoot());
     }
@@ -122,14 +122,14 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new OnceProps(new[] { "read", "write" }));
 
-        Assert.IsType<OnceProp>(dict["Permissions"]);
+        Assert.IsType<OnceProp>(dict["permissions"]);
     }
 
     [Fact]
     public void Once_attribute_enables_once_resolution()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new OnceProps(new[] { "read", "write" }));
-        var prop = (OnceProp)dict["Permissions"]!;
+        var prop = (OnceProp)dict["permissions"]!;
 
         Assert.True(prop.Once.ShouldResolveOnce());
     }
@@ -138,7 +138,7 @@ public class PropAttributeResolverTests
     public void Once_attribute_with_key_sets_key()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new OnceWithKeyProps("admin"));
-        var prop = (OnceProp)dict["Role"]!;
+        var prop = (OnceProp)dict["role"]!;
 
         Assert.Equal("user-role", prop.Once.GetKey());
     }
@@ -147,7 +147,7 @@ public class PropAttributeResolverTests
     public void Once_attribute_with_ttl_produces_expiration_metadata()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new OnceWithTtlProps("cached"));
-        var prop = (OnceProp)dict["Data"]!;
+        var prop = (OnceProp)dict["data"]!;
 
         // TTL is set — ExpiresAt returns a non-null timestamp
         Assert.NotNull(prop.Once.ExpiresAt());
@@ -160,7 +160,7 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new OptionalProps("lazy-data"));
 
-        Assert.IsType<OptionalProp>(dict["Activity"]);
+        Assert.IsType<OptionalProp>(dict["activity"]);
     }
 
     [Fact]
@@ -168,7 +168,7 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new OptionalProps("lazy-data"));
 
-        Assert.IsAssignableFrom<IIgnoreFirstLoad>(dict["Activity"]);
+        Assert.IsAssignableFrom<IIgnoreFirstLoad>(dict["activity"]);
     }
 
     // -- Mixed attributes --
@@ -179,11 +179,11 @@ public class PropAttributeResolverTests
         var dict = PropAttributeResolver.ConvertToPropsDict(
             new DashboardProps("Dashboard", "heavy", new[] { 1, 2 }, new[] { "read" }, "audit"));
 
-        Assert.IsType<string>(dict["Title"]);
-        Assert.IsType<DeferProp>(dict["Stats"]);
-        Assert.IsType<MergeProp>(dict["Items"]);
-        Assert.IsType<OnceProp>(dict["Permissions"]);
-        Assert.IsType<OptionalProp>(dict["Activity"]);
+        Assert.IsType<string>(dict["title"]);
+        Assert.IsType<DeferProp>(dict["stats"]);
+        Assert.IsType<MergeProp>(dict["items"]);
+        Assert.IsType<OnceProp>(dict["permissions"]);
+        Assert.IsType<OptionalProp>(dict["activity"]);
     }
 
     [Fact]
@@ -193,11 +193,11 @@ public class PropAttributeResolverTests
         var dict = PropAttributeResolver.ConvertToPropsDict(props);
         var services = Substitute.For<IServiceProvider>();
 
-        Assert.Equal("Dashboard", dict["Title"]);
-        Assert.Equal("heavy", await ((IInertiaProp)dict["Stats"]!).ResolveAsync(services));
-        Assert.Equal(new[] { 1, 2 }, await ((IInertiaProp)dict["Items"]!).ResolveAsync(services));
-        Assert.Equal(new[] { "read" }, await ((IInertiaProp)dict["Permissions"]!).ResolveAsync(services));
-        Assert.Equal("audit", await ((IInertiaProp)dict["Activity"]!).ResolveAsync(services));
+        Assert.Equal("Dashboard", dict["title"]);
+        Assert.Equal("heavy", await ((IInertiaProp)dict["stats"]!).ResolveAsync(services));
+        Assert.Equal(new[] { 1, 2 }, await ((IInertiaProp)dict["items"]!).ResolveAsync(services));
+        Assert.Equal(new[] { "read" }, await ((IInertiaProp)dict["permissions"]!).ResolveAsync(services));
+        Assert.Equal("audit", await ((IInertiaProp)dict["activity"]!).ResolveAsync(services));
     }
 
     // -- Rule 1: IInertiaProp value skips attributes --
@@ -208,7 +208,7 @@ public class PropAttributeResolverTests
         var deferProp = new DeferProp(() => (object?)"manual", "custom-group");
         var dict = PropAttributeResolver.ConvertToPropsDict(new PropTypeWithAttribute(deferProp));
 
-        var prop = Assert.IsType<DeferProp>(dict["Stats"]);
+        var prop = Assert.IsType<DeferProp>(dict["stats"]);
         Assert.Equal("custom-group", prop.Defer.Group());
     }
 
@@ -218,7 +218,7 @@ public class PropAttributeResolverTests
     public void Defer_plus_merge_stacks()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeferMergeProps("data"));
-        var prop = Assert.IsType<DeferProp>(dict["Stats"]);
+        var prop = Assert.IsType<DeferProp>(dict["stats"]);
 
         Assert.True(prop.Merge.ShouldMerge());
     }
@@ -227,7 +227,7 @@ public class PropAttributeResolverTests
     public void Defer_plus_deep_merge_stacks()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeferDeepMergeProps("data"));
-        var prop = Assert.IsType<DeferProp>(dict["Stats"]);
+        var prop = Assert.IsType<DeferProp>(dict["stats"]);
 
         Assert.True(prop.Merge.ShouldDeepMerge());
     }
@@ -236,7 +236,7 @@ public class PropAttributeResolverTests
     public void Defer_plus_prepend_merge_stacks()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeferPrependProps("data"));
-        var prop = Assert.IsType<DeferProp>(dict["Items"]);
+        var prop = Assert.IsType<DeferProp>(dict["items"]);
 
         Assert.True(prop.Merge.ShouldPrependAtRoot());
     }
@@ -247,7 +247,7 @@ public class PropAttributeResolverTests
     public void Defer_plus_once_stacks()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeferOnceProps("data"));
-        var prop = Assert.IsType<DeferProp>(dict["Stats"]);
+        var prop = Assert.IsType<DeferProp>(dict["stats"]);
 
         Assert.True(prop.Once.ShouldResolveOnce());
     }
@@ -258,7 +258,7 @@ public class PropAttributeResolverTests
     public void Defer_plus_merge_plus_once_triple_stacks()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new DeferMergeOnceProps("data"));
-        var prop = Assert.IsType<DeferProp>(dict["Stats"]);
+        var prop = Assert.IsType<DeferProp>(dict["stats"]);
 
         Assert.Equal("analytics", prop.Defer.Group());
         Assert.True(prop.Merge.ShouldDeepMerge());
@@ -272,7 +272,7 @@ public class PropAttributeResolverTests
     public void Merge_plus_once_stacks()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new MergeOnceProps(new[] { 1, 2 }));
-        var prop = Assert.IsType<MergeProp>(dict["Items"]);
+        var prop = Assert.IsType<MergeProp>(dict["items"]);
 
         Assert.True(prop.Merge.ShouldMerge());
         Assert.True(prop.Once.ShouldResolveOnce());
@@ -284,7 +284,7 @@ public class PropAttributeResolverTests
     public void Optional_plus_once_stacks()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new OptionalOnceProps("lazy"));
-        var prop = Assert.IsType<OptionalProp>(dict["Activity"]);
+        var prop = Assert.IsType<OptionalProp>(dict["activity"]);
 
         Assert.True(prop.Once.ShouldResolveOnce());
     }
@@ -343,7 +343,7 @@ public class PropAttributeResolverTests
     {
         // When both [InertiaOnce] and [InertiaMerge] are present, Merge is the base
         var dict = PropAttributeResolver.ConvertToPropsDict(new OnceMergeProps("data"));
-        var prop = Assert.IsType<MergeProp>(dict["Data"]);
+        var prop = Assert.IsType<MergeProp>(dict["data"]);
 
         Assert.True(prop.Merge.ShouldMerge());
         Assert.True(prop.Once.ShouldResolveOnce());
@@ -366,7 +366,7 @@ public class PropAttributeResolverTests
     public async Task Null_value_with_defer_attribute_resolves_to_null()
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new NullableDeferProps(null));
-        var prop = (IInertiaProp)dict["Stats"]!;
+        var prop = (IInertiaProp)dict["stats"]!;
 
         var result = await prop.ResolveAsync(Substitute.For<IServiceProvider>());
 
@@ -378,7 +378,7 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new NullableAlwaysProps(null));
 
-        Assert.IsType<AlwaysProp>(dict["User"]);
+        Assert.IsType<AlwaysProp>(dict["user"]);
     }
 
     [Fact]
@@ -386,7 +386,7 @@ public class PropAttributeResolverTests
     {
         var dict = PropAttributeResolver.ConvertToPropsDict(new NullablePlainProps(null));
 
-        Assert.Null(dict["Data"]);
+        Assert.Null(dict["data"]);
     }
 
     // -- Caching --
@@ -397,8 +397,8 @@ public class PropAttributeResolverTests
         var dict1 = PropAttributeResolver.ConvertToPropsDict(new PlainProps("Alice", 30));
         var dict2 = PropAttributeResolver.ConvertToPropsDict(new PlainProps("Bob", 25));
 
-        Assert.Equal("Alice", dict1["Name"]);
-        Assert.Equal("Bob", dict2["Name"]);
+        Assert.Equal("Alice", dict1["name"]);
+        Assert.Equal("Bob", dict2["name"]);
     }
 
     // -- Test records: single attributes --

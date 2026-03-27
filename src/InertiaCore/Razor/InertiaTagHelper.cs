@@ -48,9 +48,11 @@ public class InertiaTagHelper : TagHelper
             return;
         }
 
-        // CSR: empty div with data-page attribute for client-side rendering
+        // CSR: script tag (Inertia v3) + div for client-side rendering
         var json = JsonSerializer.Serialize(page, s_jsonOptions);
-        var encoded = HttpUtility.HtmlAttributeEncode(json);
-        output.Content.SetHtmlContent($"<div id=\"{Id}\" data-page=\"{encoded}\"></div>");
+        var encoded = HttpUtility.HtmlEncode(json);
+        output.Content.SetHtmlContent(
+            $"<script data-page=\"{Id}\" type=\"application/json\">{json}</script>" +
+            $"<div id=\"{Id}\"></div>");
     }
 }

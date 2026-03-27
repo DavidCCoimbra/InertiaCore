@@ -43,8 +43,8 @@ public class RenderTests : InertiaResponseFactoryTestBase
 
         var response = factory.Render("Users/Show", new { Name = "Alice", Age = 30 });
 
-        Assert.Equal("Alice", response.Props["Name"]);
-        Assert.Equal(30, response.Props["Age"]);
+        Assert.Equal("Alice", response.Props["name"]);
+        Assert.Equal(30, response.Props["age"]);
     }
 
     [Fact]
@@ -101,8 +101,8 @@ public class RenderTests : InertiaResponseFactoryTestBase
 
         var response = factory.Render("Users/Show", new UserProps("Alice", 30));
 
-        Assert.Equal("Alice", response.Props["Name"]);
-        Assert.Equal(30, response.Props["Age"]);
+        Assert.Equal("Alice", response.Props["name"]);
+        Assert.Equal(30, response.Props["age"]);
     }
 
     [Fact]
@@ -113,7 +113,7 @@ public class RenderTests : InertiaResponseFactoryTestBase
         var response = factory.Render("Users/Show", new UserProps("Bob", 25));
 
         Assert.Equal("Users/Show", response.Component);
-        Assert.Equal("Bob", response.Props["Name"]);
+        Assert.Equal("Bob", response.Props["name"]);
     }
 
     [Fact]
@@ -127,9 +127,9 @@ public class RenderTests : InertiaResponseFactoryTestBase
 
         var response = factory.Render("Dashboard/Index", props);
 
-        Assert.Equal("Dashboard", response.Props["Title"]);
-        Assert.Equal(new[] { 1, 2, 3 }, response.Props["Items"]);
-        Assert.Equal(true, response.Props["IsAdmin"]);
+        Assert.Equal("Dashboard", response.Props["title"]);
+        Assert.Equal(new[] { 1, 2, 3 }, response.Props["items"]);
+        Assert.Equal(true, response.Props["isAdmin"]);
     }
 
     private record UserProps(string Name, int Age);

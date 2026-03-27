@@ -32,7 +32,7 @@ public class EndpointFilterTests : IClassFixture<TestWebAppFactory>
         inertia
             .IsInertiaResponse()
             .HasComponent("About/Index")
-            .HasProp("Title", "About Us");
+            .HasProp("title", "About Us");
     }
 
     [Fact]

@@ -10,6 +10,14 @@ namespace InertiaCore.Core;
 internal sealed class TypedSharedPropsProvider<TProps>(Func<HttpContext, TProps> factory) : ISharedPropsProvider
     where TProps : class
 {
-    public Dictionary<string, object?> GetSharedProps(HttpContext context) =>
-        PropAttributeResolver.ConvertToPropsDict(factory(context));
+    public Dictionary<string, object?> GetSharedProps(HttpContext context)
+    {
+        var props = factory(context);
+        if (props is Dictionary<string, object?> dict)
+        {
+            return dict;
+        }
+
+        return PropAttributeResolver.ConvertToPropsDict(props);
+    }
 }

@@ -9,4 +9,5 @@
   <Folder Name="/samples/">
     <Project Path="samples/DemoApp/DemoApp.csproj" />
   </Folder>
+  <Project Path="../InertiaCore.Vite/src/InertiaCore.Vite/InertiaCore.Vite.csproj" />
 </Solution>

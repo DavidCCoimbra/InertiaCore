@@ -40,7 +40,7 @@ public class FullPipelineTests : IClassFixture<TestWebAppFactory>
             .HasComponent("Home/Index")
             .HasUrl("/")
             .HasVersion("1.0.0")
-            .HasProp("Greeting", "Hello from Inertia!")
+            .HasProp("greeting", "Hello from Inertia!")
             .HasNoErrors()
             .HasNoFlash();
     }
@@ -115,7 +115,7 @@ public class FullPipelineTests : IClassFixture<TestWebAppFactory>
 
         inertia
             .HasComponent("About/Index")
-            .HasProp("Title", "About Us");
+            .HasProp("title", "About Us");
     }
 
     [Fact]

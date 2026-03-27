@@ -112,7 +112,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
         var response = await _client.SendAsync(request);
         var inertia = await AssertableInertia.FromResponseAsync(response);
 
-        inertia.HasProp("Greeting", "Hello from Inertia!");
+        inertia.HasProp("greeting", "Hello from Inertia!");
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
         var response = await _client.SendAsync(request);
         var inertia = await AssertableInertia.FromResponseAsync(response);
 
-        inertia.HasProp("Greeting");
+        inertia.HasProp("greeting");
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
         var response = await _client.SendAsync(request);
         var inertia = await AssertableInertia.FromResponseAsync(response);
 
-        inertia.HasProp<string>("Greeting", value =>
+        inertia.HasProp<string>("greeting", value =>
         {
             Assert.NotNull(value);
             Assert.Contains("Inertia", value!);
@@ -185,7 +185,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
         var response = await _client.SendAsync(request);
         var inertia = await AssertableInertia.FromResponseAsync(response);
 
-        Assert.Throws<AssertionException>(() => inertia.MissingProp("Greeting"));
+        Assert.Throws<AssertionException>(() => inertia.MissingProp("greeting"));
     }
 
     // -- Fluent chaining --
@@ -204,7 +204,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
             .HasComponent("Home/Index")
             .HasUrl("/")
             .HasVersion("1.0.0")
-            .HasProp("Greeting", "Hello from Inertia!")
+            .HasProp("greeting", "Hello from Inertia!")
             .MissingProp("nonexistent");
     }
 
@@ -249,7 +249,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
     {
         var inertia = await _client.GetInertiaAssertAsync("/", "1.0.0");
 
-        Assert.Throws<AssertionException>(() => inertia.HasDeferredProp("Greeting"));
+        Assert.Throws<AssertionException>(() => inertia.HasDeferredProp("greeting"));
     }
 
     // -- Merge props --
@@ -267,7 +267,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
     {
         var inertia = await _client.GetInertiaAssertAsync("/", "1.0.0");
 
-        Assert.Throws<AssertionException>(() => inertia.HasMergedProp("Greeting"));
+        Assert.Throws<AssertionException>(() => inertia.HasMergedProp("greeting"));
     }
 
     // -- Errors --
@@ -350,7 +350,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
     {
         var inertia = await _client.GetInertiaAssertAsync("/", "1.0.0");
 
-        inertia.Where("Greeting", prop => prop.GetString()!.Contains("Inertia"));
+        inertia.Where("greeting", prop => prop.GetString()!.Contains("Inertia"));
     }
 
     [Fact]
@@ -359,7 +359,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
         var inertia = await _client.GetInertiaAssertAsync("/", "1.0.0");
 
         Assert.Throws<AssertionException>(() =>
-            inertia.Where("Greeting", prop => prop.GetString() == "wrong"));
+            inertia.Where("greeting", prop => prop.GetString() == "wrong"));
     }
 
     // -- HasPropValue typed --
@@ -369,7 +369,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
     {
         var inertia = await _client.GetInertiaAssertAsync("/", "1.0.0");
 
-        inertia.HasPropValue("Greeting", "Hello from Inertia!");
+        inertia.HasPropValue("greeting", "Hello from Inertia!");
     }
 
     [Fact]
@@ -378,7 +378,7 @@ public class AssertableInertiaTests : IClassFixture<TestWebAppFactory>
         var inertia = await _client.GetInertiaAssertAsync("/", "1.0.0");
 
         Assert.Throws<AssertionException>(() =>
-            inertia.HasPropValue("Greeting", "wrong value"));
+            inertia.HasPropValue("greeting", "wrong value"));
     }
 
     // -- Response-level --

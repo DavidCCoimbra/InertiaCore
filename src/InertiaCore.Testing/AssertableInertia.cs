@@ -75,18 +75,27 @@ public sealed partial class AssertableInertia
     private static async Task<AssertableInertia> FromHtmlResponseAsync(HttpResponseMessage response)
     {
         var html = await response.Content.ReadAsStringAsync();
-        var match = DataPagePattern().Match(html);
 
-        if (!match.Success)
+        // Inertia v3: <script data-page="app" type="application/json">{...}</script>
+        var scriptMatch = ScriptPagePattern().Match(html);
+        if (scriptMatch.Success)
         {
-            throw new InvalidOperationException(
-                "Could not find data-page attribute in HTML response. " +
-                "Ensure the response contains an element with a data-page attribute.");
+            var page = JsonSerializer.Deserialize<JsonElement>(scriptMatch.Groups[1].Value);
+            return new AssertableInertia(page) { Response = response };
         }
 
-        var json = System.Web.HttpUtility.HtmlDecode(match.Groups[1].Value);
-        var page = JsonSerializer.Deserialize<JsonElement>(json);
-        return new AssertableInertia(page) { Response = response };
+        // Inertia v2: <div data-page="{...}">
+        var attrMatch = DataPagePattern().Match(html);
+        if (attrMatch.Success)
+        {
+            var json = System.Web.HttpUtility.HtmlDecode(attrMatch.Groups[1].Value);
+            var page = JsonSerializer.Deserialize<JsonElement>(json);
+            return new AssertableInertia(page) { Response = response };
+        }
+
+        throw new InvalidOperationException(
+            "Could not find Inertia page data in HTML response. " +
+            "Ensure the response contains a <script data-page> tag (v3) or a data-page attribute (v2).");
     }
 
     // -- Fluent assertions --
@@ -659,6 +668,9 @@ public sealed partial class AssertableInertia
 
         return this;
     }
+
+    [GeneratedRegex(@"<script data-page=""[^""]*"" type=""application/json"">(.*?)</script>")]
+    private static partial Regex ScriptPagePattern();
 
     [GeneratedRegex(@"data-page=""([^""]+)""")]
     private static partial Regex DataPagePattern();

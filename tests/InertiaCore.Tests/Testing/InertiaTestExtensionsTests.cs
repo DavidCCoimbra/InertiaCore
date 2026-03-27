@@ -39,7 +39,7 @@ public class InertiaTestExtensionsTests : IClassFixture<TestWebAppFactory>
         inertia
             .HasComponent("Home/Index")
             .HasUrl("/")
-            .HasProp("Greeting");
+            .HasProp("greeting");
     }
 
     [Fact]
