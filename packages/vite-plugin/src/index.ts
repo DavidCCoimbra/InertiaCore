@@ -3,14 +3,17 @@ import { AddressInfo } from 'net'
 import { fileURLToPath } from 'url'
 import path from 'path'
 import colors from 'picocolors'
-import { Plugin, loadEnv, UserConfig, ConfigEnv, ResolvedConfig, SSROptions, PluginOption, Rolldown, createLogger, defaultAllowedOrigins } from 'vite'
+import { Plugin, loadEnv, UserConfig, ConfigEnv, ResolvedConfig, SSROptions, PluginOption, createLogger, defaultAllowedOrigins } from 'vite'
+
+// Vite 8 renamed Rollup → Rolldown. Support both by importing whichever is available.
+type InputOption = Record<string, string> | string[] | string
 import fullReload, { Config as FullReloadConfig } from 'vite-plugin-full-reload'
 
 export interface DotnetVitePluginConfig {
     /**
      * The path or paths of the entry points to compile.
      */
-    input: Rolldown.InputOption
+    input: InputOption
 
     /**
      * The application's public directory.
@@ -36,7 +39,7 @@ export interface DotnetVitePluginConfig {
     /**
      * The path of the SSR entry point.
      */
-    ssr?: Rolldown.InputOption
+    ssr?: InputOption
 
     /**
      * The directory where the SSR bundle should be written.
@@ -374,6 +377,24 @@ function resolveDotnetVitePluginConfig(config: string|string[]|DotnetVitePluginC
         ssrOutputDirectory: config.ssrOutputDirectory ?? 'dist/ssr',
         refresh: config.refresh ?? false,
         hotFile: config.hotFile ?? path.join((config.publicDirectory ?? 'wwwroot'), 'hot'),
+        transformOnServe: config.transformOnServe ?? ((code) => code),
+    }
+}
+
+/**
+ * Ensure the Vite dev server should run in the current environment.
+ * Prevents running HMR in CI or production-like environments.
+ */
+function ensureCommandShouldRunInEnvironment(command: string, env: Record<string, string>): void {
+    if (command === 'build' || env.ASPNETCORE_BYPASS_ENV_CHECK === '1') {
+        return
+    }
+
+    if (typeof env.CI !== 'undefined') {
+        throw new Error(
+            'aspnetcore-vite-plugin: You should not run the Vite HMR server in CI environments. ' +
+            'Set ASPNETCORE_BYPASS_ENV_CHECK=1 to override.'
+        )
     }
 }
 
@@ -387,7 +408,7 @@ function resolveBase(config: Required<DotnetVitePluginConfig>, assetUrl: string)
 /**
  * Resolve the Vite input path from the configuration.
  */
-function resolveInput(config: Required<DotnetVitePluginConfig>, ssr: boolean): Rollup.InputOption|undefined {
+function resolveInput(config: Required<DotnetVitePluginConfig>, ssr: boolean): InputOption|undefined {
     if (ssr) {
         return config.ssr
     }

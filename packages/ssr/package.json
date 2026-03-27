@@ -1,0 +1,39 @@
+{
+    "name": "@inertiacore/ssr",
+    "version": "0.1.0",
+    "description": "SSR transport variants for InertiaCore — MessagePack over Unix Domain Sockets and more.",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch"
+    },
+    "files": [
+        "dist"
+    ],
+    "keywords": [
+        "inertia",
+        "ssr",
+        "messagepack",
+        "aspnetcore"
+    ],
+    "license": "MIT",
+    "dependencies": {
+        "@msgpack/msgpack": "^3.0.0"
+    },
+    "devDependencies": {
+        "@inertiajs/core": "^3.0.0",
+        "@types/node": "^22.0.0",
+        "typescript": "^5.2.0"
+    },
+    "peerDependencies": {
+        "@inertiajs/core": "^2.0.0 || ^3.0.0"
+    }
+}

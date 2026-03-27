@@ -1,0 +1,40 @@
+{
+    "name": "@inertiacore/signalr",
+    "version": "0.1.0",
+    "description": "Real-time prop updates for Inertia.js via SignalR. Server pushes, client auto-reloads.",
+    "type": "module",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": "./dist/index.js",
+            "types": "./dist/index.d.ts"
+        }
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsc --watch"
+    },
+    "files": [
+        "dist"
+    ],
+    "keywords": [
+        "inertia",
+        "signalr",
+        "realtime",
+        "websocket",
+        "aspnetcore"
+    ],
+    "license": "MIT",
+    "dependencies": {
+        "@microsoft/signalr": "^9.0.0"
+    },
+    "peerDependencies": {
+        "@inertiajs/core": "^2.0.0 || ^3.0.0"
+    },
+    "devDependencies": {
+        "@inertiajs/core": "^3.0.0",
+        "@types/node": "^22.0.0",
+        "typescript": "^5.2.0"
+    }
+}
