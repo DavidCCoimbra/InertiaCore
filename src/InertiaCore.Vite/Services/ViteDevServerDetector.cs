@@ -6,7 +6,7 @@ using Microsoft.Extensions.Options;
 namespace InertiaCore.Vite.Services;
 
 /// <inheritdoc />
-public class ViteDevServerDetector(
+public sealed class ViteDevServerDetector(
     IWebHostEnvironment env,
     IOptions<ViteOptions> options) : IViteDevServerDetector
 {

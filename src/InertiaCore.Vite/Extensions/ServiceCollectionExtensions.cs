@@ -1,6 +1,7 @@
 using InertiaCore.Vite.Configuration;
 using InertiaCore.Vite.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 namespace InertiaCore.Vite.Extensions;
 
@@ -24,6 +25,7 @@ public static class ServiceCollectionExtensions
             builder.Configure(configure);
         }
 
+        services.AddSingleton<IValidateOptions<ViteOptions>, ViteOptionsValidator>();
         services.AddSingleton<IViteManifestReader, ViteManifestReader>();
         services.AddSingleton<IViteDevServerDetector, ViteDevServerDetector>();
         services.AddScoped<IViteAssetResolver, ViteAssetResolver>();

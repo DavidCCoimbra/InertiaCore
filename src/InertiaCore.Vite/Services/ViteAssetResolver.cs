@@ -5,7 +5,7 @@ using Microsoft.Extensions.Options;
 namespace InertiaCore.Vite.Services;
 
 /// <inheritdoc />
-public class ViteAssetResolver(
+public sealed class ViteAssetResolver(
     IOptions<ViteOptions> options,
     IViteDevServerDetector detector,
     IViteManifestReader manifestReader) : IViteAssetResolver
@@ -24,4 +24,7 @@ public class ViteAssetResolver(
 
     /// <inheritdoc />
     public ResolvedAssets ResolveEntrypoint(string entrypoint) => manifestReader.ResolveEntrypoint(entrypoint);
+
+    /// <inheritdoc />
+    public string GetAssetUrl(string path) => manifestReader.GetAssetUrl(path);
 }

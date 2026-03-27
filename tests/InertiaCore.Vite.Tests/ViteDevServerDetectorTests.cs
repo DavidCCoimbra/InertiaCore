@@ -95,9 +95,31 @@ public class ViteDevServerDetectorTests : IDisposable
         Assert.False(freshDetector.IsRunning());
     }
 
+    [Fact]
+    public void Returns_true_from_cache_on_second_call()
+    {
+        WriteHotFile("http://localhost:5173");
+        var detector = CreateDetector();
+
+        Assert.True(detector.IsRunning());
+        // Second call within 2s cache window — should still be true without re-reading file
+        Assert.True(detector.IsRunning());
+    }
+
+    [Fact]
+    public void Handles_empty_hot_file()
+    {
+        WriteHotFile("");
+        var detector = CreateDetector();
+
+        // IsRunning reads the file, gets empty string
+        Assert.True(detector.IsRunning());
+        // GetUrl returns empty trimmed string
+        Assert.Equal("", detector.GetUrl());
+    }
+
     private ViteDevServerDetector CreateDetector(
-        bool isDevelopment = true,
-        TimeSpan? cacheDurationOverride = null)
+        bool isDevelopment = true)
     {
         var env = Substitute.For<IWebHostEnvironment>();
         env.WebRootPath.Returns(_webRoot);

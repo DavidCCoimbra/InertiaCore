@@ -137,6 +137,109 @@ public class ViteManifestReaderTests : IDisposable
     }
 
     [Fact]
+    public void Skips_imports_not_found_in_manifest()
+    {
+        WriteManifest(new Dictionary<string, ManifestEntry>
+        {
+            ["app.ts"] = new()
+            {
+                File = "app.js",
+                IsEntry = true,
+                Imports = ["missing-chunk.ts", "vendor.ts"],
+            },
+            ["vendor.ts"] = new()
+            {
+                File = "vendor.js",
+            },
+        });
+
+        var reader = CreateReader();
+        var result = reader.ResolveEntrypoint("app.ts");
+
+        // missing-chunk.ts skipped, vendor.ts collected
+        Assert.Single(result.PreloadFiles);
+        Assert.Equal("build/vendor.js", result.PreloadFiles[0]);
+    }
+
+    [Fact]
+    public async Task Concurrent_reads_return_same_manifest()
+    {
+        WriteManifest(new Dictionary<string, ManifestEntry>
+        {
+            ["app.ts"] = new() { File = "app.js", IsEntry = true },
+        });
+
+        var reader = CreateReader();
+
+        // Simulate concurrent access — both should get same result
+        var tasks = Enumerable.Range(0, 10)
+            .Select(_ => Task.Run(() => reader.ResolveEntrypoint("app.ts")))
+            .ToArray();
+
+        await Task.WhenAll(tasks);
+
+        Assert.All(tasks, t => Assert.Equal("build/app.js", t.Result.JsFile));
+    }
+
+    // -- GetAssetUrl --
+
+    [Fact]
+    public void GetAssetUrl_resolves_image()
+    {
+        WriteManifest(new Dictionary<string, ManifestEntry>
+        {
+            ["resources/images/logo.png"] = new() { File = "assets/logo-abc123.png" },
+        });
+
+        var reader = CreateReader();
+        var url = reader.GetAssetUrl("resources/images/logo.png");
+
+        Assert.Equal("/build/assets/logo-abc123.png", url);
+    }
+
+    [Fact]
+    public void GetAssetUrl_resolves_font()
+    {
+        WriteManifest(new Dictionary<string, ManifestEntry>
+        {
+            ["resources/fonts/Inter.woff2"] = new() { File = "assets/Inter-xyz789.woff2" },
+        });
+
+        var reader = CreateReader();
+        var url = reader.GetAssetUrl("resources/fonts/Inter.woff2");
+
+        Assert.Equal("/build/assets/Inter-xyz789.woff2", url);
+    }
+
+    [Fact]
+    public void GetAssetUrl_throws_on_missing_asset()
+    {
+        WriteManifest(new Dictionary<string, ManifestEntry>
+        {
+            ["resources/images/logo.png"] = new() { File = "assets/logo.png" },
+        });
+
+        var reader = CreateReader();
+
+        var ex = Assert.Throws<FileNotFoundException>(
+            () => reader.GetAssetUrl("resources/images/missing.png"));
+
+        Assert.Contains("missing.png", ex.Message);
+    }
+
+    [Fact]
+    public void Throws_on_invalid_manifest_json()
+    {
+        var manifestPath = Path.Combine(_webRoot, "build", ".vite", "manifest.json");
+        Directory.CreateDirectory(Path.GetDirectoryName(manifestPath)!);
+        File.WriteAllText(manifestPath, "null");
+
+        var reader = CreateReader();
+
+        Assert.Throws<InvalidOperationException>(() => reader.ResolveEntrypoint("app.ts"));
+    }
+
+    [Fact]
     public void Throws_on_missing_entry_point()
     {
         WriteManifest(new Dictionary<string, ManifestEntry>

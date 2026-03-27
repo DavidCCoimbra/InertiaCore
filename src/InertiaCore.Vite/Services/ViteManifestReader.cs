@@ -7,7 +7,7 @@ using Microsoft.Extensions.Options;
 namespace InertiaCore.Vite.Services;
 
 /// <inheritdoc />
-public class ViteManifestReader(
+public sealed class ViteManifestReader(
     IWebHostEnvironment env,
     IOptions<ViteOptions> options) : IViteManifestReader
 {
@@ -36,6 +36,22 @@ public class ViteManifestReader(
             JsFile: $"{buildDir}/{entry.File}",
             CssFiles: [.. cssFiles],
             PreloadFiles: [.. preloadFiles]);
+    }
+
+    /// <inheritdoc />
+    public string GetAssetUrl(string path)
+    {
+        var manifest = GetManifest();
+        var buildDir = options.Value.BuildDirectory;
+
+        if (!manifest.TryGetValue(path, out var entry))
+        {
+            throw new FileNotFoundException(
+                $"Asset '{path}' not found in Vite manifest. " +
+                "Ensure it is imported in your JavaScript or included in the build.");
+        }
+
+        return $"/{buildDir}/{entry.File}";
     }
 
     private static void CollectAssets(

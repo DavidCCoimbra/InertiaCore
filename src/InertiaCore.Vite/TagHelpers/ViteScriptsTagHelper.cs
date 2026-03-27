@@ -59,6 +59,11 @@ public class ViteScriptsTagHelper(IViteAssetResolver resolver) : TagHelper
         {
             var assets = resolver.ResolveEntrypoint(entry);
 
+            foreach (var preload in assets.PreloadFiles)
+            {
+                output.Content.AppendHtml(BuildModulePreload($"/{preload}"));
+            }
+
             foreach (var css in assets.CssFiles)
             {
                 output.Content.AppendHtml(BuildStylesheet($"/{css}"));
@@ -76,6 +81,19 @@ public class ViteScriptsTagHelper(IViteAssetResolver resolver) : TagHelper
 
         using var writer = new StringWriter();
         tag.TagRenderMode = TagRenderMode.Normal;
+        tag.WriteTo(writer, HtmlEncoder.Default);
+        writer.Write('\n');
+        return writer.ToString();
+    }
+
+    private static string BuildModulePreload(string href)
+    {
+        var tag = new TagBuilder("link");
+        tag.Attributes["rel"] = "modulepreload";
+        tag.Attributes["href"] = href;
+
+        using var writer = new StringWriter();
+        tag.TagRenderMode = TagRenderMode.SelfClosing;
         tag.WriteTo(writer, HtmlEncoder.Default);
         writer.Write('\n');
         return writer.ToString();

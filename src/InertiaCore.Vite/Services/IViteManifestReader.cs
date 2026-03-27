@@ -11,4 +11,10 @@ public interface IViteManifestReader
     /// Resolves an entry point to its hashed asset paths, including CSS and preload files.
     /// </summary>
     ResolvedAssets ResolveEntrypoint(string entryPoint);
+
+    /// <summary>
+    /// Resolves any asset path to its hashed URL from the Vite manifest.
+    /// Useful for images, fonts, and other static assets referenced in Razor views.
+    /// </summary>
+    string GetAssetUrl(string path);
 }

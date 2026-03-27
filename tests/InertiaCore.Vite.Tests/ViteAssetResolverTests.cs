@@ -54,6 +54,18 @@ public class ViteAssetResolverTests
     }
 
     [Fact]
+    public void GetAssetUrl_delegates_to_manifest_reader()
+    {
+        var reader = Substitute.For<IViteManifestReader>();
+        reader.GetAssetUrl("images/logo.png").Returns("/build/assets/logo-abc123.png");
+
+        var resolver = CreateResolver(reader: reader);
+        var url = resolver.GetAssetUrl("images/logo.png");
+
+        Assert.Equal("/build/assets/logo-abc123.png", url);
+    }
+
+    [Fact]
     public void Options_exposes_configuration()
     {
         var resolver = CreateResolver(entryPoints: ["app.ts"]);

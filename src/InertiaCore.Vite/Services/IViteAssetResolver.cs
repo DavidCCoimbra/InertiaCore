@@ -32,4 +32,9 @@ public interface IViteAssetResolver
     /// Resolves a Vite entry point to its hashed asset paths from the manifest.
     /// </summary>
     ResolvedAssets ResolveEntrypoint(string entrypoint);
+
+    /// <summary>
+    /// Resolves any asset path to its hashed URL from the manifest.
+    /// </summary>
+    string GetAssetUrl(string path);
 }
