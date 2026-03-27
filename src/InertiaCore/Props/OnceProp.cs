@@ -6,10 +6,13 @@ namespace InertiaCore.Props;
 /// <summary>
 /// A typed prop that is resolved once and excluded on subsequent requests.
 /// </summary>
-public class OnceProp<T> : IInertiaProp, IIgnoreFirstLoad, IOnceable
+public class OnceProp<T> : IInertiaProp, IIgnoreFirstLoad, IOnceable, ILiveProp, IFallbackProp, ITimedProp
 {
     private readonly Func<IServiceProvider, Task<object?>> _callback;
     private readonly OnceBehavior _once = new();
+    private readonly LiveBehavior _live = new();
+    private readonly FallbackBehavior _fallback = new();
+    private readonly TimedBehavior _timed = new();
 
     /// <summary>Wraps a synchronous typed callback.</summary>
     public OnceProp(Func<T?> callback)
@@ -44,6 +47,18 @@ public class OnceProp<T> : IInertiaProp, IIgnoreFirstLoad, IOnceable
     public OnceProp<T> Fresh(bool value = true) { _once.SetRefresh(value); return this; }
     /// <summary>Sets a TTL.</summary>
     public OnceProp<T> Until(TimeSpan ttl) { _once.SetTtl(ttl); return this; }
+    /// <summary>The live update configuration.</summary>
+    public LiveBehavior Live => _live;
+    /// <summary>Enables real-time updates via SignalR.</summary>
+    public OnceProp<T> WithLive(string? channel = null) { _live.Enable(channel); return this; }
+    /// <summary>The fallback configuration.</summary>
+    public FallbackBehavior Fallback => _fallback;
+    /// <summary>Sets a fallback value for when the prop is not included.</summary>
+    public OnceProp<T> WithFallback(object? value) { _fallback.SetFallback(value); return this; }
+    /// <summary>The timed refresh configuration.</summary>
+    public TimedBehavior Timed => _timed;
+    /// <summary>Configures the prop to refresh at a fixed interval.</summary>
+    public OnceProp<T> RefreshEvery(TimeSpan interval) { _timed.SetInterval(interval); return this; }
 }
 
 /// <summary>

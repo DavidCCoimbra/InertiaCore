@@ -31,6 +31,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IInertiaResponseFactory, InertiaResponseFactory>();
         services.AddSingleton<InertiaMiddleware>();
         services.AddSingleton<EncryptHistoryMiddleware>();
+
+        // SSR gateway — default HTTP transport. Use AddInertiaMessagePack() or
+        // AddInertiaEmbeddedV8() from companion packages to override.
         services.AddHttpClient<ISsrGateway, HttpSsrGateway>();
 
         // Auto-validation: register MVC filter that redirects Inertia requests with errors

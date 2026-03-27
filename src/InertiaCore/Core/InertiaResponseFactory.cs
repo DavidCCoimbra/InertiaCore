@@ -316,6 +316,22 @@ public class InertiaResponseFactory : IInertiaResponseFactory
     /// <inheritdoc cref="Once(Func{object})"/>
     public static OnceProp<T> Once<T>(Func<IServiceProvider, Task<T?>> callback) => new(callback);
 
+    // -- Conditional factory methods --
+
+    /// <summary>
+    /// Returns the value when the condition is true, or excludes the prop entirely when false.
+    /// </summary>
+    public static object? When(bool condition, Func<object?> callback) =>
+        condition ? callback() : ConditionalProp.Excluded;
+
+    /// <inheritdoc cref="When(bool, Func{object})"/>
+    public static object? When<T>(bool condition, Func<T?> callback) =>
+        condition ? callback() : ConditionalProp.Excluded;
+
+    /// <inheritdoc cref="When(bool, Func{object})"/>
+    public static object? When(bool condition, object? value) =>
+        condition ? value : ConditionalProp.Excluded;
+
     // -- Scroll factory methods --
 
     /// <summary>

@@ -1,13 +1,19 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/InertiaCore.Vite/InertiaCore.Vite.csproj" />
     <Project Path="src/InertiaCore/InertiaCore.csproj" />
+    <Project Path="src/InertiaCore.EmbeddedV8/InertiaCore.EmbeddedV8.csproj" />
+    <Project Path="src/InertiaCore.MessagePack/InertiaCore.MessagePack.csproj" />
+    <Project Path="src/InertiaCore.SignalR/InertiaCore.SignalR.csproj" />
     <Project Path="src/InertiaCore.Testing/InertiaCore.Testing.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/InertiaCore.MessagePack.Tests/InertiaCore.MessagePack.Tests.csproj" />
+    <Project Path="tests/InertiaCore.SignalR.Tests/InertiaCore.SignalR.Tests.csproj" />
     <Project Path="tests/InertiaCore.Tests/InertiaCore.Tests.csproj" />
+    <Project Path="tests/InertiaCore.Vite.Tests/InertiaCore.Vite.Tests.csproj" />
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/DemoApp/DemoApp.csproj" />
   </Folder>
-  <Project Path="../InertiaCore.Vite/src/InertiaCore.Vite/InertiaCore.Vite.csproj" />
 </Solution>

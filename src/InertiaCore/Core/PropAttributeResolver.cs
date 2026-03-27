@@ -27,6 +27,16 @@ internal static class PropAttributeResolver
 
         foreach (var prop in properties)
         {
+            // [InertiaWhen] — skip prop entirely if condition is false
+            if (prop.When is not null)
+            {
+                var conditionProp = type.GetProperty(prop.When.ConditionProperty);
+                if (conditionProp?.GetValue(props) is not true)
+                {
+                    continue;
+                }
+            }
+
             var value = prop.Property.GetValue(props);
             var key = JsonNamingPolicy.CamelCase.ConvertName(prop.Property.Name);
             dict[key] = value is IInertiaProp
@@ -51,7 +61,11 @@ internal static class PropAttributeResolver
                 property.GetCustomAttribute<InertiaDeferAttribute>(),
                 property.GetCustomAttribute<InertiaMergeAttribute>(),
                 property.GetCustomAttribute<InertiaOnceAttribute>(),
-                property.GetCustomAttribute<InertiaOptionalAttribute>());
+                property.GetCustomAttribute<InertiaOptionalAttribute>(),
+                property.GetCustomAttribute<InertiaLiveAttribute>(),
+                property.GetCustomAttribute<InertiaWhenAttribute>(),
+                property.GetCustomAttribute<InertiaFallbackAttribute>(),
+                property.GetCustomAttribute<InertiaTimedAttribute>());
 
             ValidateAttributes(info, type);
             result[i] = info;
@@ -111,44 +125,60 @@ internal static class PropAttributeResolver
 
     private static object? WrapValue(PropPropertyInfo info, object? value)
     {
-        // Base: Defer (supports +Merge, +Once)
+        // Base: Defer
         if (info.Defer is not null)
         {
             var prop = new DeferProp(() => value, info.Defer.Group);
             ApplyMerge(prop, info.Merge);
             ApplyOnce(prop, info.Once);
+            ApplyLive(prop, info.Live);
+            ApplyFallback(prop, info.Fallback);
+            ApplyTimed(prop, info.Timed);
             return prop;
         }
 
-        // Base: Optional (supports +Once)
+        // Base: Optional
         if (info.Optional is not null)
         {
             var prop = new OptionalProp(() => value);
             ApplyOnce(prop, info.Once);
+            ApplyLive(prop, info.Live);
+            ApplyFallback(prop, info.Fallback);
+            ApplyTimed(prop, info.Timed);
             return prop;
         }
 
-        // Base: Merge (supports +Once)
+        // Base: Merge
         if (info.Merge is not null)
         {
             var prop = new MergeProp(value);
             ApplyMerge(prop, info.Merge);
             ApplyOnce(prop, info.Once);
+            ApplyLive(prop, info.Live);
+            ApplyFallback(prop, info.Fallback);
+            ApplyTimed(prop, info.Timed);
             return prop;
         }
 
-        // Base: Once standalone
+        // Base: Once
         if (info.Once is not null)
         {
             var prop = new OnceProp(() => value);
             ApplyOnce(prop, info.Once);
+            ApplyLive(prop, info.Live);
+            ApplyFallback(prop, info.Fallback);
+            ApplyTimed(prop, info.Timed);
             return prop;
         }
 
         // Base: Always
         if (info.Always is not null)
         {
-            return new AlwaysProp(value);
+            var prop = new AlwaysProp(value);
+            ApplyLive(prop, info.Live);
+            ApplyFallback(prop, info.Fallback);
+            ApplyTimed(prop, info.Timed);
+            return prop;
         }
 
         return value;
@@ -195,16 +225,52 @@ internal static class PropAttributeResolver
         }
     }
 
+    private static void ApplyLive(ILiveProp prop, InertiaLiveAttribute? live)
+    {
+        if (live is null)
+        {
+            return;
+        }
+
+        prop.Live.Enable(live.Channel);
+    }
+
+    private static void ApplyFallback(IFallbackProp prop, InertiaFallbackAttribute? fallback)
+    {
+        if (fallback is null)
+        {
+            return;
+        }
+
+        var value = Activator.CreateInstance(fallback.FallbackType);
+        prop.Fallback.SetFallback(value);
+    }
+
+    private static void ApplyTimed(ITimedProp prop, InertiaTimedAttribute? timed)
+    {
+        if (timed is null || timed.IntervalSeconds <= 0)
+        {
+            return;
+        }
+
+        prop.Timed.SetInterval(TimeSpan.FromSeconds(timed.IntervalSeconds));
+    }
+
     private sealed record PropPropertyInfo(
         PropertyInfo Property,
         InertiaAlwaysAttribute? Always,
         InertiaDeferAttribute? Defer,
         InertiaMergeAttribute? Merge,
         InertiaOnceAttribute? Once,
-        InertiaOptionalAttribute? Optional)
+        InertiaOptionalAttribute? Optional,
+        InertiaLiveAttribute? Live,
+        InertiaWhenAttribute? When,
+        InertiaFallbackAttribute? Fallback,
+        InertiaTimedAttribute? Timed)
     {
         public bool HasAttributes =>
             Always is not null || Defer is not null || Merge is not null ||
-            Once is not null || Optional is not null;
+            Once is not null || Optional is not null || Live is not null ||
+            When is not null || Fallback is not null || Timed is not null;
     }
 }

@@ -79,6 +79,11 @@ public sealed class PropsResolver
         {
             var path = string.IsNullOrEmpty(prefix) ? key : $"{prefix}.{key}";
 
+            if (value is ConditionalProp)
+            {
+                continue;
+            }
+
             if (!ShouldInclude(path, value))
             {
                 continue;

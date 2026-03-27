@@ -4,19 +4,12 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <DefineConstants>$(DefineConstants);HAS_VITE</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="../../src/InertiaCore/InertiaCore.csproj" />
+    <ProjectReference Include="../../src/InertiaCore.Vite/InertiaCore.Vite.csproj" />
   </ItemGroup>
-
-  <!-- InertiaCore.Vite is optional — only available when developing locally -->
-  <ItemGroup Condition="Exists('../../../InertiaCore.Vite/src/InertiaCore.Vite/InertiaCore.Vite.csproj')">
-    <ProjectReference Include="../../../InertiaCore.Vite/src/InertiaCore.Vite/InertiaCore.Vite.csproj" />
-  </ItemGroup>
-
-  <PropertyGroup Condition="Exists('../../../InertiaCore.Vite/src/InertiaCore.Vite/InertiaCore.Vite.csproj')">
-    <DefineConstants>$(DefineConstants);HAS_VITE</DefineConstants>
-  </PropertyGroup>
 
 </Project>

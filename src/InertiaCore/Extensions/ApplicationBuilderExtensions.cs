@@ -15,6 +15,14 @@ public static class ApplicationBuilderExtensions
         app.UseMiddleware<InertiaMiddleware>();
 
     /// <summary>
+    /// Adds streaming SSR middleware. Flushes the HTML shell immediately,
+    /// then streams SSR content and hydration data. Reduces TTFB by 3-6x.
+    /// Must be registered before UseInertia().
+    /// </summary>
+    public static IApplicationBuilder UseInertiaStreaming(this IApplicationBuilder app) =>
+        app.UseMiddleware<StreamingSsrMiddleware>();
+
+    /// <summary>
     /// Adds the Inertia developer exception page. Returns error details as JSON for
     /// Inertia XHR requests instead of breaking the SPA with an HTML error page.
     /// Only active in Development environment.

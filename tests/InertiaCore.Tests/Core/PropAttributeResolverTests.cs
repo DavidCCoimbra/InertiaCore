@@ -373,6 +373,94 @@ public class PropAttributeResolverTests
         Assert.Null(result);
     }
 
+    // -- [InertiaLive] --
+
+    [Fact]
+    public void Live_attribute_on_always_prop()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(new LiveAlwaysProps("data"));
+        var prop = (AlwaysProp)dict["notifications"]!;
+
+        Assert.True(prop.Live.IsLive());
+        Assert.Equal("notifications", prop.Live.Channel());
+    }
+
+    [Fact]
+    public void Live_attribute_on_defer_prop()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(new LiveDeferProps("data"));
+        var prop = (DeferProp)dict["stats"]!;
+
+        Assert.True(prop.Live.IsLive());
+        Assert.Equal("dashboard-stats", prop.Live.Channel());
+        Assert.Equal("analytics", prop.Defer.Group());
+    }
+
+    [Fact]
+    public void Live_attribute_on_merge_prop()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(new LiveMergeProps(["msg1"]));
+        var prop = (MergeProp)dict["messages"]!;
+
+        Assert.True(prop.Live.IsLive());
+        Assert.Equal("chat", prop.Live.Channel());
+        Assert.True(prop.Merge.ShouldMerge());
+    }
+
+    [Fact]
+    public void Live_attribute_on_once_prop()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(new LiveOnceProps(["read"]));
+        var prop = (OnceProp)dict["permissions"]!;
+
+        Assert.True(prop.Live.IsLive());
+        Assert.Equal("permissions", prop.Live.Channel());
+    }
+
+    [Fact]
+    public void Live_attribute_on_optional_prop()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(new LiveOptionalProps("audit"));
+        var prop = (OptionalProp)dict["activity"]!;
+
+        Assert.True(prop.Live.IsLive());
+        Assert.Equal("activity", prop.Live.Channel());
+    }
+
+    [Fact]
+    public void Live_composes_with_defer_merge_once()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(new LiveDeferMergeOnceProps("data"));
+        var prop = (DeferProp)dict["stats"]!;
+
+        Assert.True(prop.Live.IsLive());
+        Assert.Equal("full-stack", prop.Live.Channel());
+        Assert.Equal("analytics", prop.Defer.Group());
+        Assert.True(prop.Merge.ShouldDeepMerge());
+        Assert.True(prop.Once.ShouldResolveOnce());
+    }
+
+    [Fact]
+    public void Live_fluent_api_works_on_all_prop_types()
+    {
+        var always = InertiaCore.Core.InertiaResponseFactory.Always("data").WithLive("ch1");
+        var defer = InertiaCore.Core.InertiaResponseFactory.Defer(() => "data").WithLive("ch2");
+        var merge = InertiaCore.Core.InertiaResponseFactory.Merge("data").WithLive("ch3");
+        var once = InertiaCore.Core.InertiaResponseFactory.Once(() => "data").WithLive("ch4");
+        var optional = InertiaCore.Core.InertiaResponseFactory.Optional(() => "data").WithLive("ch5");
+
+        Assert.True(always.Live.IsLive());
+        Assert.True(defer.Live.IsLive());
+        Assert.True(merge.Live.IsLive());
+        Assert.True(once.Live.IsLive());
+        Assert.True(optional.Live.IsLive());
+        Assert.Equal("ch1", always.Live.Channel());
+        Assert.Equal("ch2", defer.Live.Channel());
+        Assert.Equal("ch3", merge.Live.Channel());
+        Assert.Equal("ch4", once.Live.Channel());
+        Assert.Equal("ch5", optional.Live.Channel());
+    }
+
     [Fact]
     public void Null_value_with_always_attribute_wraps()
     {
@@ -399,6 +487,138 @@ public class PropAttributeResolverTests
 
         Assert.Equal("Alice", dict1["name"]);
         Assert.Equal("Bob", dict2["name"]);
+    }
+
+    // -- [InertiaWhen] (conditional) --
+
+    [Fact]
+    public void When_attribute_includes_prop_when_condition_true()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(
+            new ConditionalProps { IsAdmin = true, AdminPanel = "admin-data", PublicData = "public" });
+
+        Assert.True(dict.ContainsKey("adminPanel"));
+        Assert.Equal("admin-data", dict["adminPanel"]);
+        Assert.Equal("public", dict["publicData"]);
+    }
+
+    [Fact]
+    public void When_attribute_excludes_prop_when_condition_false()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(
+            new ConditionalProps { IsAdmin = false, AdminPanel = "admin-data", PublicData = "public" });
+
+        Assert.False(dict.ContainsKey("adminPanel"));
+        Assert.Equal("public", dict["publicData"]);
+    }
+
+    [Fact]
+    public void When_fluent_api_includes_when_true()
+    {
+        var dict = new Dictionary<string, object?>
+        {
+            ["admin"] = InertiaCore.Core.InertiaResponseFactory.When(true, () => "admin-data"),
+            ["public"] = "public",
+        };
+
+        Assert.Equal("admin-data", dict["admin"]);
+    }
+
+    [Fact]
+    public void When_fluent_api_returns_sentinel_when_false()
+    {
+        var result = InertiaCore.Core.InertiaResponseFactory.When(false, () => "admin-data");
+
+        Assert.Same(InertiaCore.Core.ConditionalProp.Excluded, result);
+    }
+
+    [Fact]
+    public void When_generic_fluent_api_works()
+    {
+        var included = InertiaCore.Core.InertiaResponseFactory.When(true, () => 42);
+        var excluded = InertiaCore.Core.InertiaResponseFactory.When(false, () => 42);
+
+        Assert.Equal(42, included);
+        Assert.Same(InertiaCore.Core.ConditionalProp.Excluded, excluded);
+    }
+
+    // -- Fallback --
+
+    [Fact]
+    public void Fallback_fluent_api_works()
+    {
+        var prop = InertiaCore.Core.InertiaResponseFactory.Defer(() => "data")
+            .WithFallback("default-value");
+
+        Assert.True(prop.Fallback.HasFallback());
+        Assert.Equal("default-value", prop.Fallback.GetFallback());
+    }
+
+    [Fact]
+    public void Fallback_attribute_sets_fallback()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(new FallbackDeferProps("data"));
+        var prop = (DeferProp)dict["stats"]!;
+
+        Assert.True(prop.Fallback.HasFallback());
+        Assert.IsType<FallbackStats>(prop.Fallback.GetFallback());
+    }
+
+    [Fact]
+    public void Fallback_composable_with_all_types()
+    {
+        var always = InertiaCore.Core.InertiaResponseFactory.Always("x").WithFallback("fb");
+        var merge = InertiaCore.Core.InertiaResponseFactory.Merge("x").WithFallback("fb");
+        var once = InertiaCore.Core.InertiaResponseFactory.Once(() => "x").WithFallback("fb");
+        var optional = InertiaCore.Core.InertiaResponseFactory.Optional(() => "x").WithFallback("fb");
+
+        Assert.True(always.Fallback.HasFallback());
+        Assert.True(merge.Fallback.HasFallback());
+        Assert.True(once.Fallback.HasFallback());
+        Assert.True(optional.Fallback.HasFallback());
+    }
+
+    // -- Timed --
+
+    [Fact]
+    public void Timed_fluent_api_works()
+    {
+        var prop = InertiaCore.Core.InertiaResponseFactory.Always("time")
+            .RefreshEvery(TimeSpan.FromSeconds(30));
+
+        Assert.True(prop.Timed.IsTimed());
+        Assert.Equal(30000, prop.Timed.IntervalMs());
+    }
+
+    [Fact]
+    public void Timed_attribute_on_always_prop()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(new TimedAlwaysProps("now"));
+        var prop = (AlwaysProp)dict["serverTime"]!;
+
+        Assert.True(prop.Timed.IsTimed());
+        Assert.Equal(30000, prop.Timed.IntervalMs());
+    }
+
+    [Fact]
+    public void Timed_attribute_on_defer_prop()
+    {
+        var dict = PropAttributeResolver.ConvertToPropsDict(new TimedDeferProps("99.50"));
+        var prop = (DeferProp)dict["price"]!;
+
+        Assert.True(prop.Timed.IsTimed());
+        Assert.Equal(5000, prop.Timed.IntervalMs());
+    }
+
+    [Fact]
+    public void Timed_composable_with_live()
+    {
+        var prop = InertiaCore.Core.InertiaResponseFactory.Defer(() => "data")
+            .WithLive("channel")
+            .RefreshEvery(TimeSpan.FromSeconds(10));
+
+        Assert.True(prop.Live.IsLive());
+        Assert.True(prop.Timed.IsTimed());
     }
 
     // -- Test records: single attributes --
@@ -483,4 +703,57 @@ public class PropAttributeResolverTests
         [property: InertiaAlways] string? User);
 
     private record NullablePlainProps(string? Data);
+
+    // -- Test records: live --
+
+    private record LiveAlwaysProps(
+        [property: InertiaAlways][property: InertiaLive(Channel = "notifications")] string Notifications);
+
+    private record LiveDeferProps(
+        [property: InertiaDefer(Group = "analytics")][property: InertiaLive(Channel = "dashboard-stats")] string Stats);
+
+    private record LiveMergeProps(
+        [property: InertiaMerge][property: InertiaLive(Channel = "chat")] string[] Messages);
+
+    private record LiveOnceProps(
+        [property: InertiaOnce][property: InertiaLive(Channel = "permissions")] string[] Permissions);
+
+    private record LiveOptionalProps(
+        [property: InertiaOptional][property: InertiaLive(Channel = "activity")] string Activity);
+
+    private record LiveDeferMergeOnceProps(
+        [property: InertiaDefer(Group = "analytics")]
+        [property: InertiaMerge(Deep = true)]
+        [property: InertiaOnce(TtlSeconds = 3600)]
+        [property: InertiaLive(Channel = "full-stack")] string Stats);
+
+    // -- Test records: conditional --
+
+    private class ConditionalProps
+    {
+        public bool IsAdmin { get; init; }
+
+        [InertiaWhen(nameof(IsAdmin))]
+        public string? AdminPanel { get; init; }
+
+        public string? PublicData { get; init; }
+    }
+
+    // -- Test records: fallback --
+
+    private class FallbackStats
+    {
+        public int Total { get; init; }
+    }
+
+    private record FallbackDeferProps(
+        [property: InertiaDefer][property: InertiaFallback(typeof(FallbackStats))] string Stats);
+
+    // -- Test records: timed --
+
+    private record TimedAlwaysProps(
+        [property: InertiaAlways][property: InertiaTimed(IntervalSeconds = 30)] string ServerTime);
+
+    private record TimedDeferProps(
+        [property: InertiaDefer][property: InertiaTimed(IntervalSeconds = 5)] string Price);
 }

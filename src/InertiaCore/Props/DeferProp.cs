@@ -6,12 +6,15 @@ namespace InertiaCore.Props;
 /// <summary>
 /// A typed prop with deferred loading, excluded from the initial response and loaded via partial reload.
 /// </summary>
-public class DeferProp<T> : IInertiaProp, IIgnoreFirstLoad, IDeferrable, IMergeable, IOnceable
+public class DeferProp<T> : IInertiaProp, IIgnoreFirstLoad, IDeferrable, IMergeable, IOnceable, ILiveProp, IFallbackProp, ITimedProp
 {
     private readonly Func<IServiceProvider, Task<object?>> _callback;
     private readonly DeferBehavior _defer = new();
     private readonly MergeBehavior _merge = new();
     private readonly OnceBehavior _once = new();
+    private readonly LiveBehavior _live = new();
+    private readonly FallbackBehavior _fallback = new();
+    private readonly TimedBehavior _timed = new();
 
     /// <summary>Wraps a synchronous typed callback.</summary>
     public DeferProp(Func<T?> callback, string? group = null)
@@ -52,6 +55,18 @@ public class DeferProp<T> : IInertiaProp, IIgnoreFirstLoad, IDeferrable, IMergea
     public DeferProp<T> Fresh(bool value = true) { _once.SetRefresh(value); return this; }
     /// <summary>Sets a TTL.</summary>
     public DeferProp<T> Until(TimeSpan ttl) { _once.SetTtl(ttl); return this; }
+    /// <summary>The live update configuration.</summary>
+    public LiveBehavior Live => _live;
+    /// <summary>Enables real-time updates via SignalR.</summary>
+    public DeferProp<T> WithLive(string? channel = null) { _live.Enable(channel); return this; }
+    /// <summary>The fallback configuration.</summary>
+    public FallbackBehavior Fallback => _fallback;
+    /// <summary>Sets a fallback value for when the prop is not included.</summary>
+    public DeferProp<T> WithFallback(object? value) { _fallback.SetFallback(value); return this; }
+    /// <summary>The timed refresh configuration.</summary>
+    public TimedBehavior Timed => _timed;
+    /// <summary>Configures the prop to refresh at a fixed interval.</summary>
+    public DeferProp<T> RefreshEvery(TimeSpan interval) { _timed.SetInterval(interval); return this; }
 }
 
 /// <summary>

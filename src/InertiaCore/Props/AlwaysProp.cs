@@ -1,13 +1,17 @@
 using InertiaCore.Contracts;
+using InertiaCore.Props.Behaviors;
 
 namespace InertiaCore.Props;
 
 /// <summary>
 /// A typed prop that is always included, even during partial reloads.
 /// </summary>
-public class AlwaysProp<T> : IInertiaProp, IAlwaysIncluded
+public class AlwaysProp<T> : IInertiaProp, IAlwaysIncluded, ILiveProp, IFallbackProp, ITimedProp
 {
     private readonly object? _value;
+    private readonly LiveBehavior _live = new();
+    private readonly FallbackBehavior _fallback = new();
+    private readonly TimedBehavior _timed = new();
 
     /// <summary>Wraps a raw typed value.</summary>
     public AlwaysProp(T? value) : this((object?)value) { }
@@ -35,6 +39,20 @@ public class AlwaysProp<T> : IInertiaProp, IAlwaysIncluded
             _ => _value,
         };
     }
+
+    /// <summary>The live update configuration.</summary>
+    public LiveBehavior Live => _live;
+
+    /// <summary>Enables real-time updates via SignalR on the specified channel.</summary>
+    public AlwaysProp<T> WithLive(string? channel = null) { _live.Enable(channel); return this; }
+    /// <summary>The fallback configuration.</summary>
+    public FallbackBehavior Fallback => _fallback;
+    /// <summary>Sets a fallback value for when the prop is not included.</summary>
+    public AlwaysProp<T> WithFallback(object? value) { _fallback.SetFallback(value); return this; }
+    /// <summary>The timed refresh configuration.</summary>
+    public TimedBehavior Timed => _timed;
+    /// <summary>Configures the prop to refresh at a fixed interval.</summary>
+    public AlwaysProp<T> RefreshEvery(TimeSpan interval) { _timed.SetInterval(interval); return this; }
 }
 
 /// <summary>

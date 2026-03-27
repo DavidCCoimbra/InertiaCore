@@ -78,6 +78,19 @@ public static class Inertia
 
     // Always
 
+    // -- Conditional --
+
+    /// <inheritdoc cref="InertiaResponseFactory.When(bool, Func{object})"/>
+    public static object? When(bool condition, Func<object?> callback) => InertiaResponseFactory.When(condition, callback);
+
+    /// <inheritdoc cref="InertiaResponseFactory.When(bool, Func{object})"/>
+    public static object? When<T>(bool condition, Func<T?> callback) => InertiaResponseFactory.When(condition, callback);
+
+    /// <inheritdoc cref="InertiaResponseFactory.When(bool, Func{object})"/>
+    public static object? When(bool condition, object? value) => InertiaResponseFactory.When(condition, value);
+
+    // Always
+
     /// <inheritdoc cref="InertiaResponseFactory.Always(object?)"/>
     public static AlwaysProp Always(object? value) => InertiaResponseFactory.Always(value);
 
