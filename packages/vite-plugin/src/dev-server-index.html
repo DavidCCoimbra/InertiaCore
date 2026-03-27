@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Vite Dev Server | ASP.NET Core</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-deep: #05080f;
+            --accent: #c5a059;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --card-bg: rgba(255, 255, 255, 0.02);
+            --card-border: rgba(197, 160, 89, 0.15);
+            --green: #22c55e;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Inter', -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            background-image:
+                radial-gradient(circle at 50% -20%, rgba(197, 160, 89, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 0% 100%, rgba(197, 160, 89, 0.03) 0%, transparent 40%);
+        }
+
+        ::selection { background: var(--accent); color: black; }
+        a { color: inherit; text-decoration: none; }
+
+        /* Main layout */
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 1.5rem 5rem;
+        }
+
+        .container { max-width: 42rem; width: 100%; }
+
+        /* Header */
+        .header { text-align: center; margin-bottom: 3rem; }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            background: rgba(34, 197, 94, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+        }
+
+        .status-text {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.25rem;
+            line-height: 1.15;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(197, 160, 89, 0.2);
+        }
+
+        h1 .accent { font-style: italic; color: var(--accent); }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-weight: 300;
+            letter-spacing: 0.025em;
+            max-width: 28rem;
+            margin: 0 auto;
+            font-size: 0.875rem;
+        }
+
+        /* Nav links */
+        .nav-links {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.25rem;
+            width: 100%;
+            border-radius: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover {
+            background: rgba(197, 160, 89, 0.08);
+            border-color: var(--accent);
+        }
+
+        .nav-link-content { display: flex; align-items: center; gap: 1rem; }
+
+        .nav-icon {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 0.5rem;
+            background: rgba(197, 160, 89, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .nav-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+        }
+
+        .nav-subtitle {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .nav-subtitle.mono { font-family: ui-monospace, 'SF Mono', monospace; }
+
+        .nav-chevron {
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+        }
+
+        .nav-link:hover .nav-chevron {
+            color: var(--accent);
+            transform: translateX(4px);
+        }
+
+        /* Info cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            padding: 1.25rem;
+            border-radius: 1rem;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            border-color: rgba(197, 160, 89, 0.4);
+            background: rgba(255, 255, 255, 0.04);
+            transform: translateY(-2px);
+        }
+
+        .card-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+        }
+
+        .card-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-value {
+            font-size: 0.75rem;
+            font-family: ui-monospace, 'SF Mono', monospace;
+            color: var(--accent);
+        }
+
+        .card-badge {
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            color: var(--text-muted);
+        }
+
+        /* Footer */
+        footer {
+            padding: 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .footer-inner {
+            max-width: 80rem;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .footer-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.3em;
+            color: var(--text-muted);
+            margin-bottom: 0.25rem;
+        }
+
+        .footer-name {
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-icon {
+            color: var(--text-muted);
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .footer-icon:hover { color: var(--accent); }
+
+        /* Responsive */
+        @media (min-width: 768px) {
+            h1 { font-size: 3.75rem; }
+            .cards-grid { grid-template-columns: 1fr 1fr; }
+            .footer-inner { flex-direction: row; justify-content: space-between; }
+        }
+    </style>
+</head>
+<body>
+<main>
+    <div class="container">
+        <div class="header">
+            <div class="status-badge">
+                <span class="status-dot"></span>
+                <span class="status-text">HMR Active</span>
+            </div>
+            <h1>
+                Vite is ready.<br/>
+                <span class="accent">.NET is listening.</span>
+            </h1>
+            <p class="subtitle">
+                This is the Vite dev server. Your ASP.NET Core application is running separately.
+            </p>
+        </div>
+        <div class="nav-links">
+            <a class="nav-link" href="{{ APP_URL }}">
+                <div class="nav-link-content">
+                    <div class="nav-icon">
+                        <span class="material-symbols-outlined">open_in_new</span>
+                    </div>
+                    <div>
+                        <p class="nav-title">Open Application</p>
+                        <p class="nav-subtitle mono">{{ APP_URL }}</p>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined nav-chevron">chevron_right</span>
+            </a>
+            <a class="nav-link" href="https://github.com/DavidCCoimbra/aspnetcore-vite-plugin">
+                <div class="nav-link-content">
+                    <div class="nav-icon">
+                        <span class="material-symbols-outlined">description</span>
+                    </div>
+                    <div>
+                        <p class="nav-title">Documentation</p>
+                        <p class="nav-subtitle">Setup Guide &amp; Configuration</p>
+                    </div>
+                </div>
+                <span class="material-symbols-outlined nav-chevron">chevron_right</span>
+            </a>
+        </div>
+        <div class="cards-grid">
+            <div class="glass-card">
+                <p class="card-label">Vite Dev Server</p>
+                <div class="card-row">
+                    <span class="card-value">localhost:5173</span>
+                    <span class="card-badge">HMR</span>
+                </div>
+            </div>
+            <div class="glass-card">
+                <p class="card-label">.NET Application</p>
+                <div class="card-row">
+                    <span class="card-value">{{ APP_URL }}</span>
+                    <span class="card-badge">Kestrel</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<footer>
+    <div class="footer-inner">
+        <div>
+            <div class="footer-label">Plugin</div>
+            <span class="footer-name">aspnetcore-vite-plugin</span>
+        </div>
+        <a href="https://github.com/DavidCCoimbra/aspnetcore-vite-plugin">
+            <span class="material-symbols-outlined footer-icon">terminal</span>
+        </a>
+    </div>
+</footer>
+</body></html>
