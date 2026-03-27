@@ -34,9 +34,9 @@ export interface DotnetVitePluginConfig {
 }
 
 export interface SsrDevConfig {
-    /** SSR sidecar script path. @default 'dist/ssr/ssr.js' */
-    script?: string
-    /** Port the SSR sidecar listens on. @default 13714 */
+    /** SSR entry module path (Vite transforms on-the-fly). @default './ClientApp/ssr.ts' */
+    entry?: string
+    /** Port the SSR dev server listens on. @default 13714 */
     port?: number
 }
 

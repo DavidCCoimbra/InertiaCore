@@ -89,17 +89,23 @@ function resolveDotnetPlugin(pluginConfig: Required<DotnetVitePluginConfig>): Do
 
             const appUrl = resolveAppUrl(envDir, resolvedConfig?.mode ?? 'development')
 
-            // Launch .NET server if configured (detects port conflicts)
-            if (pluginConfig.launcher !== false) {
-                startDotnetServer(pluginConfig.launcher, server.config.logger, appUrl)
-            }
+            // Skip launcher/SSR hooks when running inside the SSR dev server's Vite instance
+            // (createDevServer() creates its own Vite — without this guard, infinite recursion)
+            const isInsideSsrDev = process.env.INERTIACORE_SSR_DEV === '1'
 
-            // Launch SSR sidecar if configured
-            if (pluginConfig.ssrDev !== false) {
-                startSsrSidecar(pluginConfig.ssrDev, server.config.logger)
-            }
+            if (!isInsideSsrDev) {
+                // Launch .NET server if configured (detects port conflicts)
+                if (pluginConfig.launcher !== false) {
+                    startDotnetServer(pluginConfig.launcher, server.config.logger, appUrl)
+                }
 
-            bindDotnetExitHandlers()
+                // Launch SSR sidecar if configured
+                if (pluginConfig.ssrDev !== false) {
+                    startSsrSidecar(pluginConfig.ssrDev, server.config.logger)
+                }
+
+                bindDotnetExitHandlers()
+            }
 
             server.httpServer?.once('listening', () => {
                 viteDevServerUrl = resolveListeningServerUrl(server, userConfig)

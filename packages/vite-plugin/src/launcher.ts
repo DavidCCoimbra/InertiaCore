@@ -1,14 +1,19 @@
+import fs from 'fs'
+import path from 'path'
 import { spawn, type ChildProcess } from 'child_process'
 import { createConnection } from 'net'
 import colors from 'picocolors'
 import type { LauncherConfig, SsrDevConfig } from './config.js'
 
 let dotnetProcess: ChildProcess | null = null
-let ssrBuildProcess: ChildProcess | null = null
 let ssrProcess: ChildProcess | null = null
+let ssrBuildProcess: ChildProcess | null = null
 
 // Build error pattern: CS followed by 4 digits
 const buildErrorPattern = /\b(CS\d{4}|error\s+CS\d{4})/
+
+// Purple color for .NET-themed log lines
+const net = (s: string) => `\x1b[38;2;204;110;212m${s}\x1b[0m`
 
 /**
  * Check if a port is already in use.
@@ -48,8 +53,6 @@ export async function startDotnetServer(
     const command = opts.command ?? 'dotnet'
     const args = opts.args ?? ['watch', 'run']
     const cwd = opts.cwd ?? process.cwd()
-
-    const net = (s: string) => `\x1b[38;2;204;110;212m${s}\x1b[0m`
 
     // Port conflict detection — skip launcher if already running
     if (appUrl) {
@@ -113,22 +116,25 @@ function formatDotnetOutput(logger: import('vite').Logger, line: string): void {
 }
 
 /**
- * Start SSR development mode:
- * 1. `vite build --ssr --watch` — continuously rebuilds SSR bundle on file changes
- * 2. `node --watch dist/ssr/ssr.js` — auto-restarts sidecar when bundle changes
- *
- * Flow: edit .vue file → Vite rebuilds SSR bundle → Node detects change → sidecar restarts → refresh to see SSR output
+ * Check if @inertiacore/ssr is installed by looking in node_modules.
+ */
+function hasSsrPackage(): boolean {
+    return fs.existsSync(path.join(process.cwd(), 'node_modules', '@inertiacore', 'ssr'))
+}
+
+/**
+ * Start SSR development mode.
+ * - If @inertiacore/ssr is installed → Nuxt-style dev server (Vite ssrLoadModule, zero rebuild)
+ * - If not installed → fallback to vite build --ssr --watch + node --watch (rebuild on changes)
  */
 export function startSsrSidecar(
     config: boolean | SsrDevConfig,
     logger: import('vite').Logger,
 ): void {
-    if (config === false || ssrBuildProcess) return
+    if (config === false || ssrProcess) return
 
     const opts: SsrDevConfig = typeof config === 'object' ? config : {}
-    const script = opts.script ?? 'dist/ssr/ssr.js'
     const port = opts.port ?? 13714
-    const net = (s: string) => `\x1b[38;2;204;110;212m${s}\x1b[0m`
 
     // Check if SSR sidecar is already running
     const portCheck = createConnection({ port, host: '127.0.0.1' })
@@ -139,83 +145,110 @@ export function startSsrSidecar(
     portCheck.on('error', () => {
         portCheck.destroy()
 
-        // Start watching SSR builder — rebuilds on every file change
-        logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim('vite build --ssr --watch')}`)
-
-        ssrBuildProcess = spawn('npx', ['vite', 'build', '--ssr', '--watch'], {
-            cwd: process.cwd(),
-            stdio: ['ignore', 'pipe', 'pipe'],
-            env: process.env,
-        })
-
-        let sidecarStarted = false
-
-        ssrBuildProcess.stdout?.on('data', (data: Buffer) => {
-            const text = data.toString().trim()
-            if (!text) return
-
-            for (const line of text.split('\n')) {
-                if (!line.trim()) continue
-                logger.info(`  ${colors.dim('[ssr:build]')} ${line.trim()}`)
-            }
-
-            // Start sidecar after first successful build
-            if (!sidecarStarted && (text.includes('built in') || text.includes('✓'))) {
-                sidecarStarted = true
-                startSsrNode(script, logger)
-            }
-        })
-
-        ssrBuildProcess.stderr?.on('data', (data: Buffer) => {
-            const text = data.toString().trim()
-            if (text) logger.warn(`  ${colors.dim('[ssr:build]')} ${text}`)
-        })
-
-        ssrBuildProcess.on('exit', (code) => {
-            if (code !== null && code !== 0) {
-                logger.error(`  ${colors.red('[ssr:build]')} Exited with code ${code}`)
-            }
-            ssrBuildProcess = null
-        })
+        if (hasSsrPackage()) {
+            startSsrDevServer(opts, port, logger)
+        } else {
+            startSsrBuildWatch(opts, port, logger)
+        }
     })
     portCheck.setTimeout(500, () => { portCheck.destroy() })
 }
 
 /**
- * Start the Node.js SSR sidecar with --watch (auto-restarts when bundle changes).
+ * Nuxt-style: @inertiacore/ssr createDevServer with Vite ssrLoadModule.
+ * Zero rebuild — modules transformed on-the-fly.
  */
-function startSsrNode(script: string, logger: import('vite').Logger): void {
-    const net = (s: string) => `\x1b[38;2;204;110;212m${s}\x1b[0m`
-    logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim(`node --watch ${script}`)}`)
+function startSsrDevServer(opts: SsrDevConfig, port: number, logger: import('vite').Logger): void {
+    const ssrEntry = opts.entry ?? './ClientApp/ssr.ts'
 
-    ssrProcess = spawn('node', ['--watch', script], {
+    logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim(`Vite ssrLoadModule dev server on :${port}`)} ${colors.green('(zero rebuild)')}`)
+
+    const script = `
+        import { createDevServer } from '@inertiacore/ssr';
+        createDevServer({
+            port: ${port},
+            ssrEntry: ${JSON.stringify(ssrEntry)},
+        });
+    `
+
+    ssrProcess = spawn('node', ['--input-type=module', '-e', script], {
+        cwd: process.cwd(),
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, INERTIACORE_SSR_DEV: '1' },
+    })
+
+    pipeOutput(ssrProcess, '[ssr]', logger)
+}
+
+/**
+ * Fallback: vite build --ssr --watch + node --watch.
+ * Rebuilds SSR bundle on file changes (~120ms per change).
+ */
+function startSsrBuildWatch(opts: SsrDevConfig, port: number, logger: import('vite').Logger): void {
+    const script = 'dist/ssr/ssr.js'
+
+    logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim('vite build --ssr --watch')} ${colors.yellow('(@inertiacore/ssr not installed — using rebuild mode)')}`)
+
+    ssrBuildProcess = spawn('npx', ['vite', 'build', '--ssr', '--watch'], {
         cwd: process.cwd(),
         stdio: ['ignore', 'pipe', 'pipe'],
         env: process.env,
     })
 
-    ssrProcess.stdout?.on('data', (data: Buffer) => {
-        for (const line of data.toString().trim().split('\n')) {
-            if (line.trim()) logger.info(`  ${colors.dim('[ssr]')} ${line.trim()}`)
+    let sidecarStarted = false
+
+    ssrBuildProcess.stdout?.on('data', (data: Buffer) => {
+        const text = data.toString().trim()
+        if (!text) return
+
+        for (const line of text.split('\n')) {
+            if (line.trim()) logger.info(`  ${colors.dim('[ssr:build]')} ${line.trim()}`)
+        }
+
+        if (!sidecarStarted && (text.includes('built in') || text.includes('✓'))) {
+            sidecarStarted = true
+            logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim(`node --watch ${script}`)}`)
+
+            ssrProcess = spawn('node', ['--watch', script], {
+                cwd: process.cwd(),
+                stdio: ['ignore', 'pipe', 'pipe'],
+                env: process.env,
+            })
+            pipeOutput(ssrProcess, '[ssr]', logger)
         }
     })
 
-    ssrProcess.stderr?.on('data', (data: Buffer) => {
-        for (const line of data.toString().trim().split('\n')) {
-            if (line.trim()) logger.warn(`  ${colors.dim('[ssr]')} ${line.trim()}`)
-        }
-    })
-
-    ssrProcess.on('exit', (code) => {
-        if (code !== null && code !== 0) {
-            logger.error(`  ${colors.red('[ssr]')} Exited with code ${code}`)
-        }
-        ssrProcess = null
+    ssrBuildProcess.stderr?.on('data', (data: Buffer) => {
+        const text = data.toString().trim()
+        if (text) logger.warn(`  ${colors.dim('[ssr:build]')} ${text}`)
     })
 }
 
 /**
- * Stop SSR processes if launched by us.
+ * Pipe child process output to the Vite logger.
+ */
+function pipeOutput(proc: ChildProcess, prefix: string, logger: import('vite').Logger): void {
+    proc.stdout?.on('data', (data: Buffer) => {
+        for (const line of data.toString().trim().split('\n')) {
+            if (line.trim()) logger.info(`  ${colors.dim(prefix)} ${line.trim()}`)
+        }
+    })
+
+    proc.stderr?.on('data', (data: Buffer) => {
+        for (const line of data.toString().trim().split('\n')) {
+            if (line.trim()) logger.warn(`  ${colors.dim(prefix)} ${line.trim()}`)
+        }
+    })
+
+    proc.on('exit', (code) => {
+        if (code !== null && code !== 0) {
+            logger.error(`  ${colors.red(prefix)} Exited with code ${code}`)
+        }
+    })
+}
+
+/**
+ * Stop SSR dev server if launched by us.
  */
 function stopSsrSidecar(): void {
     if (ssrBuildProcess) { ssrBuildProcess.kill('SIGTERM'); ssrBuildProcess = null }

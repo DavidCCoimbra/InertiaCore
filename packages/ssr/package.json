@@ -31,9 +31,16 @@
     "devDependencies": {
         "@inertiajs/core": "^3.0.0",
         "@types/node": "^22.0.0",
-        "typescript": "^5.2.0"
+        "typescript": "^5.2.0",
+        "vite": "^8.0.0"
     },
     "peerDependencies": {
-        "@inertiajs/core": "^2.0.0 || ^3.0.0"
+        "@inertiajs/core": "^2.0.0 || ^3.0.0",
+        "vite": "^7.0.0 || ^8.0.0"
+    },
+    "peerDependenciesMeta": {
+        "vite": {
+            "optional": true
+        }
     }
 }
