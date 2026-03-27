@@ -10,7 +10,7 @@ import type { Plugin } from 'vite';
  * @example
  * ```ts
  * // vite.config.ts
- * import { embeddedV8Ssr } from 'aspnetcore-vite-plugin/embedded-v8-ssr';
+ * import { embeddedV8Ssr } from '@inertiacore/vite/embedded-v8-ssr';
  *
  * export default defineConfig({
  *     plugins: [embeddedV8Ssr(), vue()],

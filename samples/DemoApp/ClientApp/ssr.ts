@@ -2,7 +2,7 @@ import { createInertiaApp } from '@inertiajs/vue3'
 import createServer from '@inertiajs/vue3/server'
 import { renderToString } from '@vue/server-renderer'
 import { createSSRApp, h } from 'vue'
-import { resolvePageComponent } from 'aspnetcore-vite-plugin/inertia-helpers'
+import { resolvePageComponent } from '@inertiacore/vite/inertia-helpers'
 
 createServer((page) =>
     createInertiaApp({

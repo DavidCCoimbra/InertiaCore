@@ -1,7 +1,7 @@
 {
-    "name": "aspnetcore-vite-plugin",
+    "name": "@inertiacore/vite",
     "version": "0.1.0",
-    "description": "ASP.NET Core plugin for Vite.",
+    "description": "ASP.NET Core Vite plugin for InertiaCore — hot reload, manifest resolution, .NET integration.",
     "keywords": [
         "aspnetcore",
         "dotnet",
