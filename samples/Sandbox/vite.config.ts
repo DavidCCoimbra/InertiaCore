@@ -9,7 +9,9 @@ export default defineConfig({
             input: ['ClientApp/app.ts'],
             ssr: 'ClientApp/ssr.ts',
             refresh: true,
-            ssrDev: true,
+            ssrDev: process.env.SSR_MODE === 'v8'
+                ? { v8: true }
+                : true,
         }),
         tailwindcss(),
         vue(),

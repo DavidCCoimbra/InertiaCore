@@ -38,6 +38,13 @@ export interface SsrDevConfig {
     entry?: string
     /** Port the SSR dev server listens on. @default 13714 */
     port?: number
+    /** Enable EmbeddedV8 SSR mode. Builds a self-contained IIFE bundle and signals .NET to reload V8 engines after each build. */
+    v8?: boolean | V8Config
+}
+
+export interface V8Config {
+    /** URL to POST after SSR build completes. @default 'http://localhost:5274/inertia/ssr-reload' */
+    reloadUrl?: string
 }
 
 export interface ProxyConfig {

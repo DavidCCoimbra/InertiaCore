@@ -145,7 +145,10 @@ export function startSsrSidecar(
     portCheck.on('error', () => {
         portCheck.destroy()
 
-        if (hasSsrPackage()) {
+        if (opts.v8) {
+            // V8 mode: build + signal, no Node.js sidecar
+            startSsrBuildWatch(opts, port, logger)
+        } else if (hasSsrPackage()) {
             startSsrDevServer(opts, port, logger)
         } else {
             startSsrBuildWatch(opts, port, logger)
@@ -186,8 +189,15 @@ function startSsrDevServer(opts: SsrDevConfig, port: number, logger: import('vit
  */
 function startSsrBuildWatch(opts: SsrDevConfig, port: number, logger: import('vite').Logger): void {
     const script = 'dist/ssr/ssr.js'
+    const v8Opts = typeof opts.v8 === 'object' ? opts.v8 : {}
+    const reloadUrl = opts.v8 ? (v8Opts.reloadUrl ?? 'http://localhost:5274/inertia/ssr-reload') : undefined
 
-    logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim('vite build --ssr --watch')} ${colors.yellow('(@inertiacore/ssr not installed — using rebuild mode)')}`)
+    if (reloadUrl) {
+        logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim('vite build --ssr --watch')} ${colors.green('(EmbeddedV8)')}`)
+        logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim(`V8 reload signal → ${reloadUrl}`)}`)
+    } else {
+        logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim('vite build --ssr --watch')} ${colors.yellow('(@inertiacore/ssr not installed — using rebuild mode)')}`)
+    }
 
     ssrBuildProcess = spawn('npx', ['vite', 'build', '--ssr', '--watch'], {
         cwd: process.cwd(),
@@ -205,16 +215,22 @@ function startSsrBuildWatch(opts: SsrDevConfig, port: number, logger: import('vi
             if (line.trim()) logger.info(`  ${colors.dim('[ssr:build]')} ${line.trim()}`)
         }
 
-        if (!sidecarStarted && (text.includes('built in') || text.includes('✓'))) {
-            sidecarStarted = true
-            logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim(`node --watch ${script}`)}`)
+        if (text.includes('built in') || text.includes('✓')) {
+            if (reloadUrl) {
+                // Signal V8 engine pool to reload the bundle
+                notifyReload(reloadUrl, logger)
+            } else if (!sidecarStarted) {
+                // Fallback: start Node.js SSR sidecar on first build
+                sidecarStarted = true
+                logger.info(`  ${net('➜')}  ${net(colors.bold('SSR'))}:   ${colors.dim(`node --watch ${script}`)}`)
 
-            ssrProcess = spawn('node', ['--watch', script], {
-                cwd: process.cwd(),
-                stdio: ['ignore', 'pipe', 'pipe'],
-                env: process.env,
-            })
-            pipeOutput(ssrProcess, '[ssr]', logger)
+                ssrProcess = spawn('node', ['--watch', script], {
+                    cwd: process.cwd(),
+                    stdio: ['ignore', 'pipe', 'pipe'],
+                    env: process.env,
+                })
+                pipeOutput(ssrProcess, '[ssr]', logger)
+            }
         }
     })
 
@@ -222,6 +238,28 @@ function startSsrBuildWatch(opts: SsrDevConfig, port: number, logger: import('vi
         const text = data.toString().trim()
         if (text) logger.warn(`  ${colors.dim('[ssr:build]')} ${text}`)
     })
+}
+
+/**
+ * POST to the .NET reload endpoint to signal V8 engine hot-swap.
+ * Retries if the .NET app isn't ready yet (common on first build).
+ */
+function notifyReload(url: string, logger: import('vite').Logger, retries = 5): void {
+    fetch(url, { method: 'POST' })
+        .then(res => {
+            if (res.ok) {
+                logger.info(`  ${colors.green('✓')}  ${colors.dim('[ssr]')} ${colors.green('V8 engines reloaded')}`)
+            } else {
+                logger.warn(`  ${colors.dim('[ssr]')} Reload signal failed: ${res.status}`)
+            }
+        })
+        .catch(() => {
+            if (retries > 0) {
+                setTimeout(() => notifyReload(url, logger, retries - 1), 2000)
+            } else {
+                logger.warn(`  ${colors.dim('[ssr]')} Reload signal failed: .NET app not reachable`)
+            }
+        })
 }
 
 /**

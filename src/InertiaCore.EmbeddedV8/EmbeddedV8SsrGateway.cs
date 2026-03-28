@@ -1,5 +1,7 @@
+using System.Text.Json;
 using InertiaCore.Configuration;
 using InertiaCore.Ssr;
+using Microsoft.ClearScript.JavaScript;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -7,10 +9,13 @@ namespace InertiaCore.EmbeddedV8;
 
 /// <summary>
 /// SSR gateway that renders components in-process using an embedded V8 engine.
-/// Zero serialization, zero network — V8 reads C# objects directly via ClearScript proxy.
 /// </summary>
 public sealed partial class EmbeddedV8SsrGateway : ISsrGateway
 {
+    private static readonly JsonSerializerOptions s_jsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
     private readonly V8EnginePool _pool;
     private readonly SsrOptions _ssrOptions;
     private readonly ILogger<EmbeddedV8SsrGateway> _logger;
@@ -48,37 +53,53 @@ public sealed partial class EmbeddedV8SsrGateway : ISsrGateway
 
         try
         {
-            // Pass the C# page object directly to V8 — no serialization.
-            // ClearScript creates a transparent proxy. When JS accesses
-            // page.props.users, it reads from the C# dictionary directly.
-            engine.Script.page = page;
+            // Serialize the page to JSON and parse in V8 so JS gets a native object.
+            // ClearScript proxies don't support property access on C# dictionaries
+            // (page.component would be undefined — need page["component"] instead).
+            var pageJson = JsonSerializer.Serialize(page, s_jsonOptions);
+            engine.Script.__ssr_page_json = pageJson;
 
-            // Call the render function defined in the SSR bundle
-            engine.Execute(@"
-                __ssr_result = null;
-                __ssr_error = null;
-                (async () => {
-                    try {
-                        __ssr_result = await __inertia_ssr_render(page);
-                    } catch (e) {
-                        __ssr_error = e.message + '\n' + (e.stack || '');
-                    }
-                })();
-            ");
+            // Parse the page JSON in V8 so it's a native JS object
+            engine.Execute("var __ssr_page = JSON.parse(__ssr_page_json);");
 
-            var error = engine.Script.__ssr_error as string;
-            if (error is not null)
+            // Call the render function — returns a JS Promise
+            var promise = engine.Evaluate("__inertia_ssr_render(__ssr_page)");
+
+            // Convert JS Promise → C# Task and await the result
+            var resultObj = await JavaScriptExtensions.ToTask(promise);
+
+            if (resultObj is null || resultObj is Microsoft.ClearScript.Undefined)
             {
-                LogSsrWarning(_logger, $"V8 render error: {error}", null);
+                LogSsrWarning(_logger, "V8 render returned no result", null);
                 return null;
             }
 
-            var result = engine.Script.__ssr_result;
-            var head = ReadStringArray(result.head);
-            var body = (string)result.body;
+            // Serialize the result to JSON inside V8 (avoids ClearScript proxy issues)
+            engine.Script.__ssr_raw = resultObj;
+            var resultJson = (string)engine.Evaluate("JSON.stringify(__ssr_raw)");
+
+            if (string.IsNullOrEmpty(resultJson))
+            {
+                LogSsrWarning(_logger, "V8 render returned no result", null);
+                return null;
+            }
+
+            using var doc = JsonDocument.Parse(resultJson);
+            var root = doc.RootElement;
+
+            var headArray = new List<string>();
+            if (root.TryGetProperty("head", out var headEl) && headEl.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in headEl.EnumerateArray())
+                {
+                    if (item.GetString() is { } s) headArray.Add(s);
+                }
+            }
+
+            var body = root.TryGetProperty("body", out var bodyEl) ? bodyEl.GetString() ?? "" : "";
 
             return new SsrResponse(
-                Head: string.Join("\n", head),
+                Head: string.Join("\n", headArray),
                 Body: body);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -96,17 +117,6 @@ public sealed partial class EmbeddedV8SsrGateway : ISsrGateway
     public Task<bool> IsHealthyAsync(CancellationToken cancellationToken = default)
     {
         return Task.FromResult(_ssrOptions.Enabled && _pool.IsReady);
-    }
-
-    private static string[] ReadStringArray(dynamic jsArray)
-    {
-        var list = new List<string>();
-        for (var i = 0; i < (int)jsArray.length; i++)
-        {
-            list.Add((string)jsArray[i]);
-        }
-
-        return list.ToArray();
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "SSR V8: {Message}")]
