@@ -3,7 +3,7 @@ namespace InertiaCore.Exceptions;
 /// <summary>
 /// Exception thrown when a referenced Inertia component cannot be found.
 /// </summary>
-public class ComponentNotFoundException : InertiaException
+public sealed class ComponentNotFoundException : InertiaException
 {
     /// <summary>
     /// Initializes a new instance of <see cref="ComponentNotFoundException"/>.

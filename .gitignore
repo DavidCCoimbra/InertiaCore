@@ -37,3 +37,8 @@ node_modules/
 wwwroot/build/
 wwwroot/hot
 dist/
+CLAUDE.md
+Docs
+BasePortsInspiration
+.remember
+appsettings.json

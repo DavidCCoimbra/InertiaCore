@@ -7,7 +7,7 @@ namespace InertiaCore.Configuration;
 /// <summary>
 /// Configuration options for server-side rendering.
 /// </summary>
-public class SsrOptions
+public sealed class SsrOptions
 {
     /// <summary>
     /// Enable or disable server-side rendering.

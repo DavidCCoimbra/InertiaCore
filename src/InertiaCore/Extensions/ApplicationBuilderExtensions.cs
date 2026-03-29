@@ -29,4 +29,12 @@ public static class ApplicationBuilderExtensions
     /// </summary>
     public static IApplicationBuilder UseInertiaDeveloperExceptionPage(this IApplicationBuilder app) =>
         app.UseMiddleware<InertiaExceptionMiddleware>();
+
+    /// <summary>
+    /// Adds history encryption middleware. All Inertia responses passing through
+    /// will have <c>encryptHistory: true</c> in the page object.
+    /// Can be applied globally or to specific route groups via UseWhen().
+    /// </summary>
+    public static IApplicationBuilder UseInertiaEncryptHistory(this IApplicationBuilder app) =>
+        app.UseMiddleware<EncryptHistoryMiddleware>();
 }

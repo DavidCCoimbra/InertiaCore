@@ -5,7 +5,7 @@ namespace InertiaCore.Configuration;
 /// <summary>
 /// Main configuration options for the Inertia server-side adapter.
 /// </summary>
-public class InertiaOptions
+public sealed class InertiaOptions
 {
     /// <summary>
     /// The Razor view that wraps the Inertia app.

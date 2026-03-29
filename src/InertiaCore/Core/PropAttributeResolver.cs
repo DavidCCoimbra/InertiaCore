@@ -27,11 +27,13 @@ internal static class PropAttributeResolver
 
         foreach (var prop in properties)
         {
-            // [InertiaWhen] — skip prop entirely if condition is false
+            // [InertiaWhen] — skip prop if condition doesn't match (supports Negate)
             if (prop.When is not null)
             {
                 var conditionProp = type.GetProperty(prop.When.ConditionProperty);
-                if (conditionProp?.GetValue(props) is not true)
+                var conditionValue = conditionProp?.GetValue(props) is true;
+                var shouldInclude = prop.When.Negate ? !conditionValue : conditionValue;
+                if (!shouldInclude)
                 {
                     continue;
                 }
@@ -74,6 +76,7 @@ internal static class PropAttributeResolver
                 property.GetCustomAttribute<InertiaPageDataAttribute>());
 
             ValidateAttributes(info, type);
+            ValidateWhenAttribute(info, type);
             result[i] = info;
         }
 
@@ -126,6 +129,26 @@ internal static class PropAttributeResolver
                 $"Property '{name}' on type '{typeName}' has invalid attribute combination: " +
                 "[InertiaMerge] cannot have both Deep and Prepend enabled. " +
                 "Deep merge recursively merges objects; Prepend controls array insertion order. Choose one.");
+        }
+    }
+
+    private static void ValidateWhenAttribute(PropPropertyInfo info, Type type)
+    {
+        if (info.When is null) return;
+
+        var conditionProp = type.GetProperty(info.When.ConditionProperty);
+        if (conditionProp == null)
+        {
+            throw new InvalidOperationException(
+                $"[InertiaWhen] on '{info.Property.Name}' references property '{info.When.ConditionProperty}' " +
+                $"which does not exist on type '{type.Name}'.");
+        }
+
+        if (conditionProp.PropertyType != typeof(bool))
+        {
+            throw new InvalidOperationException(
+                $"[InertiaWhen] on '{info.Property.Name}' references property '{info.When.ConditionProperty}' " +
+                $"which is {conditionProp.PropertyType.Name}, not bool.");
         }
     }
 

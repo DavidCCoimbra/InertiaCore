@@ -1,6 +1,7 @@
 import { createApp, h } from 'vue'
 import { createInertiaApp } from '@inertiajs/vue3'
-import { resolvePageComponent, resolvePageData } from '@inertiacore/vite/inertia-helpers'
+import { resolvePageComponent, resolvePageData, initInertiaCore } from '@inertiacore/vite/inertia-helpers'
+import { initSignalR } from './plugins/signalr'
 import './app.css'
 
 const initialPage = await resolvePageData()
@@ -15,5 +16,11 @@ createInertiaApp({
         createApp({ render: () => h(App, props) })
             .use(plugin)
             .mount(el)
+
+        // Initialize InertiaCore client features (timed props, etc.)
+        initInertiaCore()
+
+        // Initialize SignalR for live props
+        initSignalR()
     },
 })

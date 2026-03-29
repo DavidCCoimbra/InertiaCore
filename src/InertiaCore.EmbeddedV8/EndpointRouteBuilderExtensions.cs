@@ -1,3 +1,4 @@
+using System.Net;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -12,6 +13,7 @@ public static class EndpointRouteBuilderExtensions
 {
     /// <summary>
     /// Maps a POST endpoint that triggers a V8 engine pool reload.
+    /// Restricted to localhost connections only for security.
     /// Call this from a Vite post-build hook to signal that the SSR bundle is ready.
     /// </summary>
     public static IEndpointConventionBuilder MapInertiaV8Reload(
@@ -20,6 +22,13 @@ public static class EndpointRouteBuilderExtensions
     {
         return endpoints.MapPost(pattern, async (HttpContext context) =>
         {
+            // Only allow reload from localhost — prevents DoS from external requests
+            if (!IPAddress.IsLoopback(context.Connection.RemoteIpAddress ?? IPAddress.None))
+            {
+                context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                return;
+            }
+
             var pool = context.RequestServices.GetRequiredService<V8EnginePool>();
             await pool.TriggerReloadAsync();
 

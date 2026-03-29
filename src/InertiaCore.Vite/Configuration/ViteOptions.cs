@@ -3,7 +3,7 @@ namespace InertiaCore.Vite.Configuration;
 /// <summary>
 /// Configuration options for Vite asset integration.
 /// </summary>
-public class ViteOptions
+public sealed class ViteOptions
 {
     /// <summary>
     /// Path to the Vite manifest file, relative to wwwroot.

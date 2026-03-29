@@ -124,7 +124,7 @@ public sealed partial class MessagePackSsrGateway : ISsrGateway
                 cancellationToken);
             return true;
         }
-        catch
+        catch (Exception)
         {
             return false;
         }

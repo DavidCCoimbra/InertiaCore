@@ -10,6 +10,7 @@
     <ProjectReference Include="../../src/InertiaCore/InertiaCore.csproj" />
     <ProjectReference Include="../../src/InertiaCore.Vite/InertiaCore.Vite.csproj" />
     <ProjectReference Include="../../src/InertiaCore.EmbeddedV8/InertiaCore.EmbeddedV8.csproj" />
+    <ProjectReference Include="../../src/InertiaCore.SignalR/InertiaCore.SignalR.csproj" />
   </ItemGroup>
 
 </Project>

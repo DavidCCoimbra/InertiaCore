@@ -49,7 +49,7 @@ public sealed partial class EmbeddedV8SsrGateway : ISsrGateway
             return null;
         }
 
-        var engine = await _pool.LeaseAsync(cancellationToken);
+        var engine = await _pool.LeaseAsync(cancellationToken).ConfigureAwait(false);
 
         try
         {
@@ -66,7 +66,7 @@ public sealed partial class EmbeddedV8SsrGateway : ISsrGateway
             var promise = engine.Evaluate("__inertia_ssr_render(__ssr_page)");
 
             // Convert JS Promise → C# Task and await the result
-            var resultObj = await JavaScriptExtensions.ToTask(promise);
+            var resultObj = await JavaScriptExtensions.ToTask(promise).ConfigureAwait(false);
 
             if (resultObj is null || resultObj is Microsoft.ClearScript.Undefined)
             {
@@ -109,7 +109,7 @@ public sealed partial class EmbeddedV8SsrGateway : ISsrGateway
         }
         finally
         {
-            await _pool.ReturnAsync(engine);
+            await _pool.ReturnAsync(engine).ConfigureAwait(false);
         }
     }
 

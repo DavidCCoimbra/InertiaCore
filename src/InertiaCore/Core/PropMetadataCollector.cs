@@ -13,6 +13,8 @@ internal sealed class PropMetadataCollector
     private readonly List<string> _prependProps = [];
     private readonly List<string> _matchPropsOn = [];
     private readonly Dictionary<string, object?> _onceProps = [];
+    private readonly Dictionary<string, int> _timedProps = [];
+    private readonly Dictionary<string, string> _liveProps = [];
 
     public void TrackSharedKeys(IEnumerable<string> keys) =>
         _sharedPropKeys.AddRange(keys);
@@ -37,6 +39,10 @@ internal sealed class PropMetadataCollector
     public void AddPrepend(string path) => _prependProps.Add(path);
 
     public void AddMatchOn(string[] keys) => _matchPropsOn.AddRange(keys);
+
+    public void AddTimed(string path, int intervalMs) => _timedProps[path] = intervalMs;
+
+    public void AddLive(string path, string channel) => _liveProps[path] = channel;
 
     public void AddOnce(string path, long? expiresAt)
     {
@@ -89,6 +95,16 @@ internal sealed class PropMetadataCollector
         if (_pageDataProps.Count > 0)
         {
             metadata["pageDataProps"] = _pageDataProps;
+        }
+
+        if (_timedProps.Count > 0)
+        {
+            metadata["timedProps"] = _timedProps;
+        }
+
+        if (_liveProps.Count > 0)
+        {
+            metadata["liveProps"] = _liveProps;
         }
 
         return metadata;

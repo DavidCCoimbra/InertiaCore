@@ -1,5 +1,6 @@
 using InertiaCore.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace InertiaCore.Filters;
 
@@ -23,13 +24,8 @@ public sealed class InertiaEndpointFilter : IEndpointFilter
     public async ValueTask<object?> InvokeAsync(
         EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        var factory = context.HttpContext.RequestServices.GetService(typeof(IInertiaResponseFactory))
-            as IInertiaResponseFactory;
-
-        if (factory != null)
-        {
-            _configure(factory);
-        }
+        var factory = context.HttpContext.RequestServices.GetRequiredService<IInertiaResponseFactory>();
+        _configure(factory);
 
         return await next(context);
     }

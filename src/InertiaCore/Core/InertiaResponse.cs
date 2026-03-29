@@ -18,7 +18,7 @@ namespace InertiaCore.Core;
 /// <summary>
 /// Builds the page object and renders as JSON for Inertia requests or as a Razor view for initial page loads.
 /// </summary>
-public partial class InertiaResponse : IActionResult, IResult
+public sealed partial class InertiaResponse : IActionResult, IResult
 {
     private static readonly JsonSerializerOptions s_jsonOptions = InertiaJsonOptions.CamelCase;
 
@@ -79,7 +79,7 @@ public partial class InertiaResponse : IActionResult, IResult
 
     /// <inheritdoc />
     public async Task ExecuteResultAsync(ActionContext context) =>
-        await ExecuteAsync(context.HttpContext);
+        await ExecuteAsync(context.HttpContext).ConfigureAwait(false);
 
     /// <inheritdoc />
     public async Task ExecuteAsync(HttpContext httpContext)
@@ -93,14 +93,14 @@ public partial class InertiaResponse : IActionResult, IResult
 
         if (!httpContext.Request.Headers.ContainsKey(InertiaHeaders.Inertia))
         {
-            await RenderRazorView(httpContext, page);
+            await RenderRazorView(httpContext, page).ConfigureAwait(false);
             return;
         }
 
         httpContext.Response.StatusCode = 200;
         httpContext.Response.Headers[InertiaHeaders.Inertia] = "true";
         httpContext.Response.ContentType = "application/json";
-        await JsonSerializer.SerializeAsync(httpContext.Response.Body, page, s_jsonOptions);
+        await JsonSerializer.SerializeAsync(httpContext.Response.Body, page, s_jsonOptions).ConfigureAwait(false);
     }
 
     private Dictionary<string, object?> BuildPageObject(
@@ -169,7 +169,7 @@ public partial class InertiaResponse : IActionResult, IResult
                 $"Razor view '{_context.RootView}' not found. Searched locations: {string.Join(", ", viewResult.SearchedLocations)}");
         }
 
-        var ssrResponse = await TrySsrRenderAsync(httpContext, page);
+        var ssrResponse = await TrySsrRenderAsync(httpContext, page).ConfigureAwait(false);
 
         var viewData = new ViewDataDictionary(new EmptyModelMetadataProvider(), new ModelStateDictionary())
         {
@@ -203,7 +203,7 @@ public partial class InertiaResponse : IActionResult, IResult
         await using var writer = new StreamWriter(httpContext.Response.Body, leaveOpen: true);
 
         var viewContext = new ViewContext(actionContext, viewResult.View, viewData, tempData, writer, new HtmlHelperOptions());
-        await viewResult.View.RenderAsync(viewContext);
+        await viewResult.View.RenderAsync(viewContext).ConfigureAwait(false);
     }
 
     private async Task<SsrResponse?> TrySsrRenderAsync(
@@ -222,7 +222,7 @@ public partial class InertiaResponse : IActionResult, IResult
 
         try
         {
-            return await _context.SsrGateway.RenderAsync(page, httpContext.RequestAborted);
+            return await _context.SsrGateway.RenderAsync(page, httpContext.RequestAborted).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

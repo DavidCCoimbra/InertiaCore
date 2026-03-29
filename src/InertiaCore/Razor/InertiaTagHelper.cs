@@ -1,3 +1,4 @@
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using InertiaCore.Constants;
@@ -57,7 +58,7 @@ public partial class InertiaTagHelper : TagHelper
 
                 output.Content.SetHtmlContent(
                     strippedBody +
-                    $"<script data-page=\"{Id}\" type=\"application/json\">{minimalJson}</script>" +
+                    $"<script data-page=\"{HtmlEncoder.Default.Encode(Id)}\" type=\"application/json\">{minimalJson}</script>" +
                     $"<script>window.__inertiaPageData=fetch({safeUrl}).then(r=>r.json())</script>");
                 return;
             }
@@ -69,8 +70,8 @@ public partial class InertiaTagHelper : TagHelper
         // CSR: script tag (Inertia v3) + div for client-side rendering
         var json = JsonSerializer.Serialize(page, s_jsonOptions);
         output.Content.SetHtmlContent(
-            $"<script data-page=\"{Id}\" type=\"application/json\">{json}</script>" +
-            $"<div id=\"{Id}\"></div>");
+            $"<script data-page=\"{HtmlEncoder.Default.Encode(Id)}\" type=\"application/json\">{json}</script>" +
+            $"<div id=\"{HtmlEncoder.Default.Encode(Id)}\"></div>");
     }
 
     private static Dictionary<string, object?> BuildMinimalPage(Dictionary<string, object?> page)

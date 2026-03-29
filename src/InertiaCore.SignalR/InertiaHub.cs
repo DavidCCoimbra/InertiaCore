@@ -4,8 +4,8 @@ namespace InertiaCore.SignalR;
 
 /// <summary>
 /// SignalR hub for Inertia real-time prop updates.
-/// Clients subscribe to components they're viewing; the server pushes refresh signals
-/// when props change. The client then does a standard Inertia partial reload.
+/// Clients subscribe to components and custom groups; the server pushes
+/// prop updates directly or signals clients to reload via HTTP.
 /// </summary>
 public sealed class InertiaHub : Hub
 {
@@ -25,5 +25,21 @@ public sealed class InertiaHub : Hub
     public async Task UnsubscribeFromComponent(string component)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, component);
+    }
+
+    /// <summary>
+    /// Join a custom group (e.g., "team-engineering", "room-5", "user:123").
+    /// </summary>
+    public async Task JoinGroup(string group)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, group);
+    }
+
+    /// <summary>
+    /// Leave a custom group.
+    /// </summary>
+    public async Task LeaveGroup(string group)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
     }
 }

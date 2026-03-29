@@ -163,7 +163,7 @@ export async function createDevServer(options: DevServerOptions = {}): Promise<h
         res.end();
     });
 
-    server.listen(port, () => {
+    server.listen(port, '127.0.0.1', () => {
         console.log(`Inertia SSR dev server (Vite ssrLoadModule) listening on http://localhost:${port}`);
         console.log(`  Entry: ${ssrEntry}`);
         console.log(`  Modules are transformed on-the-fly — zero rebuild on changes`);

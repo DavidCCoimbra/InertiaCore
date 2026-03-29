@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using InertiaCore.Configuration;
 using InertiaCore.Constants;
@@ -26,9 +25,9 @@ internal sealed class PageDataCache : IPageDataCache
     public string Store(Dictionary<string, object?> page, string? userId)
     {
         var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(page, InertiaJsonOptions.CamelCase);
-        var hash = ComputeHash(jsonBytes, userId);
+        var token = GenerateToken();
 
-        _entries[hash] = new CacheEntry(jsonBytes, DateTime.UtcNow, userId);
+        _entries[token] = new CacheEntry(jsonBytes, DateTime.UtcNow, userId);
 
         // Lazy cleanup every 100 accesses
         if (Interlocked.Increment(ref _accessCount) % 100 == 0)
@@ -36,7 +35,7 @@ internal sealed class PageDataCache : IPageDataCache
             CleanupExpired();
         }
 
-        return hash;
+        return token;
     }
 
     public byte[]? TryGetBytes(string hash, string? userId)
@@ -55,24 +54,9 @@ internal sealed class PageDataCache : IPageDataCache
         return entry.JsonBytes;
     }
 
-    private static string ComputeHash(byte[] data, string? userId)
+    private static string GenerateToken()
     {
-        byte[] hashInput;
-
-        if (userId != null)
-        {
-            var userBytes = Encoding.UTF8.GetBytes(userId);
-            hashInput = new byte[data.Length + userBytes.Length];
-            data.CopyTo(hashInput, 0);
-            userBytes.CopyTo(hashInput, data.Length);
-        }
-        else
-        {
-            hashInput = data;
-        }
-
-        var hashBytes = SHA256.HashData(hashInput);
-        return Convert.ToHexString(hashBytes)[..12].ToLowerInvariant();
+        return Convert.ToHexString(RandomNumberGenerator.GetBytes(16)).ToLowerInvariant();
     }
 
     private void CleanupExpired()

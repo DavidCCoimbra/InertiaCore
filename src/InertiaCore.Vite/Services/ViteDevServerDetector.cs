@@ -12,6 +12,7 @@ public sealed class ViteDevServerDetector(
 {
     private static readonly TimeSpan s_cacheDuration = TimeSpan.FromSeconds(2);
 
+    private readonly Lock _lock = new();
     private string? _cachedUrl;
     private DateTime _lastCheck;
 
@@ -23,25 +24,33 @@ public sealed class ViteDevServerDetector(
             return false;
         }
 
-        if (_cachedUrl is not null && DateTime.UtcNow - _lastCheck < s_cacheDuration)
+        lock (_lock)
         {
+            if (_cachedUrl is not null && DateTime.UtcNow - _lastCheck < s_cacheDuration)
+            {
+                return true;
+            }
+
+            var hotFilePath = Path.Combine(env.WebRootPath, options.Value.HotFilePath);
+
+            if (!File.Exists(hotFilePath))
+            {
+                _cachedUrl = null;
+                return false;
+            }
+
+            _cachedUrl = File.ReadAllText(hotFilePath).Trim();
+            _lastCheck = DateTime.UtcNow;
             return true;
         }
-
-        var hotFilePath = Path.Combine(env.WebRootPath, options.Value.HotFilePath);
-
-        if (!File.Exists(hotFilePath))
-        {
-            _cachedUrl = null;
-            return false;
-        }
-
-        _cachedUrl = File.ReadAllText(hotFilePath).Trim();
-        _lastCheck = DateTime.UtcNow;
-        return true;
     }
 
     /// <inheritdoc />
-    public string GetUrl() =>
-        _cachedUrl ?? throw new InvalidOperationException("Dev server is not running.");
+    public string GetUrl()
+    {
+        lock (_lock)
+        {
+            return _cachedUrl ?? throw new InvalidOperationException("Dev server is not running.");
+        }
+    }
 }

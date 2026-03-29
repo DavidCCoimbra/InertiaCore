@@ -12,7 +12,7 @@ namespace InertiaCore.Vite.TagHelpers;
 /// Razor Tag Helper that emits Vite script and stylesheet tags.
 /// </summary>
 [HtmlTargetElement("vite-scripts", TagStructure = TagStructure.WithoutEndTag)]
-public class ViteScriptsTagHelper(IViteAssetResolver resolver) : TagHelper
+public sealed class ViteScriptsTagHelper(IViteAssetResolver resolver) : TagHelper
 {
     /// <summary>
     /// Optional entry points to include. Falls back to the configured defaults.

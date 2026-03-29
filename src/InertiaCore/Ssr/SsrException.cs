@@ -3,7 +3,7 @@ namespace InertiaCore.Ssr;
 /// <summary>
 /// Exception thrown when SSR fails and ThrowOnError is enabled in SsrOptions.
 /// </summary>
-public class SsrException : Exception
+public sealed class SsrException : Exception
 {
     /// <summary>
     /// The type of SSR error that occurred.

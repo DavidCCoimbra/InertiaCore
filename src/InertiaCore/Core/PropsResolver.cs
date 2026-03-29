@@ -164,12 +164,16 @@ public sealed class PropsResolver
         }
 
         CollectOnceMetadata(path, value);
+        CollectTimedMetadata(path, value);
+        CollectLiveMetadata(path, value);
     }
 
     private void CollectMetadata(string path, object? value)
     {
         CollectMergeMetadata(path, value);
         CollectOnceMetadata(path, value);
+        CollectTimedMetadata(path, value);
+        CollectLiveMetadata(path, value);
     }
 
     private void CollectMergeMetadata(string path, object? value)
@@ -217,6 +221,22 @@ public sealed class PropsResolver
         }
 
         _metadata.AddOnce(path, onceable.Once.ExpiresAt());
+    }
+
+    private void CollectTimedMetadata(string path, object? value)
+    {
+        if (value is ITimedProp timed && timed.Timed.IsTimed() && timed.Timed.IntervalMs() is { } intervalMs)
+        {
+            _metadata.AddTimed(path, intervalMs);
+        }
+    }
+
+    private void CollectLiveMetadata(string path, object? value)
+    {
+        if (value is ILiveProp live && live.Live.IsLive() && live.Live.Channel() is { } channel)
+        {
+            _metadata.AddLive(path, channel);
+        }
     }
 
     private async Task<object?> ResolveValueAsync(string path, object? value)

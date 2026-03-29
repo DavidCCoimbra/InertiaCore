@@ -13,6 +13,11 @@ public sealed class InertiaWhenAttribute : Attribute
     public string ConditionProperty { get; }
 
     /// <summary>
+    /// When true, the prop is included when the condition is false (inverted logic).
+    /// </summary>
+    public bool Negate { get; set; }
+
+    /// <summary>
     /// Creates a conditional prop attribute.
     /// </summary>
     public InertiaWhenAttribute(string conditionProperty)

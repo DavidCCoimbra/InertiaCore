@@ -8,7 +8,7 @@ namespace InertiaCore.Razor;
 /// Tag helper for <c>&lt;inertia-head /&gt;</c> that renders SSR head content.
 /// </summary>
 [HtmlTargetElement("inertia-head", TagStructure = TagStructure.WithoutEndTag)]
-public class InertiaHeadTagHelper : TagHelper
+public sealed class InertiaHeadTagHelper : TagHelper
 {
     /// <summary>
     /// The current view context, injected by the Razor engine.

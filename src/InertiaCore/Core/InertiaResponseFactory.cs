@@ -81,9 +81,9 @@ public sealed class InertiaResponseFactory : IInertiaResponseFactory
         Render(component, (object)props);
 
     /// <inheritdoc />
-    public InertiaRedirectResult Back()
+    public InertiaRedirectResult Back(string fallbackUrl = "/")
     {
-        var referer = _httpContextAccessor.HttpContext?.Request.Headers.Referer.FirstOrDefault() ?? "/";
+        var referer = _httpContextAccessor.HttpContext?.Request.Headers.Referer.FirstOrDefault() ?? fallbackUrl;
         return new InertiaRedirectResult(referer);
     }
 
@@ -354,6 +354,64 @@ public sealed class InertiaResponseFactory : IInertiaResponseFactory
     public static ScrollProp<T> Scroll<T>(Func<T?> callback, string wrapper = "data", IProvidesScrollMetadata? metadataProvider = null) =>
         new(callback, wrapper, metadataProvider);
 
+    // -- Live factory methods (shortcut for Always + WithLive) --
+
+    /// <summary>
+    /// Creates a live prop that receives real-time updates via SignalR on the specified channel.
+    /// Shortcut for <c>Always(value).WithLive(channel)</c>.
+    /// </summary>
+    public static AlwaysProp<object?> Live(string channel, object? value) =>
+        new AlwaysProp(value).WithLive(channel);
+
+    /// <inheritdoc cref="Live(string, object?)"/>
+    public static AlwaysProp<object?> Live(string channel, Func<object?> callback) =>
+        new AlwaysProp(callback).WithLive(channel);
+
+    /// <inheritdoc cref="Live(string, object?)"/>
+    public static AlwaysProp<object?> Live(string channel, Func<Task<object?>> callback) =>
+        new AlwaysProp(callback).WithLive(channel);
+
+    /// <inheritdoc cref="Live(string, object?)"/>
+    public static AlwaysProp<T> Live<T>(string channel, T? value) =>
+        new AlwaysProp<T>(value).WithLive(channel);
+
+    /// <inheritdoc cref="Live(string, object?)"/>
+    public static AlwaysProp<T> Live<T>(string channel, Func<T?> callback) =>
+        new AlwaysProp<T>(callback).WithLive(channel);
+
+    /// <inheritdoc cref="Live(string, object?)"/>
+    public static AlwaysProp<T> Live<T>(string channel, Func<Task<T?>> callback) =>
+        new AlwaysProp<T>(callback).WithLive(channel);
+
+    // -- Timed factory methods (shortcut for Always + RefreshEvery) --
+
+    /// <summary>
+    /// Creates a timed prop that the client auto-polls at the specified interval.
+    /// Shortcut for <c>Always(value).RefreshEvery(interval)</c>.
+    /// </summary>
+    public static AlwaysProp<object?> Timed(object? value, int intervalSeconds) =>
+        new AlwaysProp(value).RefreshEvery(TimeSpan.FromSeconds(intervalSeconds));
+
+    /// <inheritdoc cref="Timed(object?, int)"/>
+    public static AlwaysProp<object?> Timed(Func<object?> callback, int intervalSeconds) =>
+        new AlwaysProp(callback).RefreshEvery(TimeSpan.FromSeconds(intervalSeconds));
+
+    /// <inheritdoc cref="Timed(object?, int)"/>
+    public static AlwaysProp<object?> Timed(Func<Task<object?>> callback, int intervalSeconds) =>
+        new AlwaysProp(callback).RefreshEvery(TimeSpan.FromSeconds(intervalSeconds));
+
+    /// <inheritdoc cref="Timed(object?, int)"/>
+    public static AlwaysProp<T> Timed<T>(T? value, int intervalSeconds) =>
+        new AlwaysProp<T>(value).RefreshEvery(TimeSpan.FromSeconds(intervalSeconds));
+
+    /// <inheritdoc cref="Timed(object?, int)"/>
+    public static AlwaysProp<T> Timed<T>(Func<T?> callback, int intervalSeconds) =>
+        new AlwaysProp<T>(callback).RefreshEvery(TimeSpan.FromSeconds(intervalSeconds));
+
+    /// <inheritdoc cref="Timed(object?, int)"/>
+    public static AlwaysProp<T> Timed<T>(Func<Task<T?>> callback, int intervalSeconds) =>
+        new AlwaysProp<T>(callback).RefreshEvery(TimeSpan.FromSeconds(intervalSeconds));
+
     /// <inheritdoc />
     public IResult Location(string url)
     {
@@ -377,7 +435,4 @@ public sealed class InertiaResponseFactory : IInertiaResponseFactory
     /// </summary>
     public void ShareOnce(string key, Func<Task<object?>> callback) =>
         _sharedProps[key] = new OnceProp(callback);
-
-    private static Dictionary<string, object?> ConvertToPropsDict(object props) =>
-        PropAttributeResolver.ConvertToPropsDict(props);
 }

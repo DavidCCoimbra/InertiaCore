@@ -5,7 +5,7 @@ namespace InertiaCore.Configuration;
 /// <summary>
 /// Validates InertiaOptions at startup to catch configuration errors early.
 /// </summary>
-public class InertiaOptionsValidator : IValidateOptions<InertiaOptions>
+public sealed class InertiaOptionsValidator : IValidateOptions<InertiaOptions>
 {
     /// <inheritdoc />
     public ValidateOptionsResult Validate(string? name, InertiaOptions options)

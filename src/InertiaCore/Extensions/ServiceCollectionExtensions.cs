@@ -5,6 +5,7 @@ using InertiaCore.Middleware;
 using InertiaCore.Ssr;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
@@ -24,6 +25,22 @@ public static class ServiceCollectionExtensions
         Action<InertiaOptions>? configure = null)
     {
         services.Configure(configure ?? (_ => { }));
+        return AddInertiaCore(services);
+    }
+
+    /// <summary>
+    /// Registers Inertia services, binding options from a configuration section.
+    /// </summary>
+    public static IServiceCollection AddInertia(
+        this IServiceCollection services,
+        IConfigurationSection section)
+    {
+        services.Configure<InertiaOptions>(section);
+        return AddInertiaCore(services);
+    }
+
+    private static IServiceCollection AddInertiaCore(IServiceCollection services)
+    {
         services.AddSingleton<IValidateOptions<InertiaOptions>, InertiaOptionsValidator>();
         services.AddHttpContextAccessor();
         services.AddScoped<IInertiaFlashService, InertiaFlashService>();

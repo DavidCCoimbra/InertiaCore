@@ -90,7 +90,7 @@ public interface IInertiaResponseFactory
     /// <summary>
     /// Creates a redirect back to the referring page. Chain .WithErrors() or .WithFlash() for data.
     /// </summary>
-    InertiaRedirectResult Back();
+    InertiaRedirectResult Back(string fallbackUrl = "/");
 
     /// <summary>
     /// Creates a redirect to the specified URL. Chain .WithErrors() or .WithFlash() for data.

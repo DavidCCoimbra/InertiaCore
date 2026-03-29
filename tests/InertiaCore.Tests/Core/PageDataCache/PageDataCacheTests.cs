@@ -30,32 +30,32 @@ public class PageDataCacheTests
     }
 
     [Fact]
-    public void Store_returns_12_character_hex_hash()
+    public void Store_returns_hex_token()
     {
         var cache = CreateCache();
         var page = CreatePage();
 
-        var hash = cache.Store(page, userId: null);
+        var token = cache.Store(page, userId: null);
 
-        Assert.Equal(12, hash.Length);
-        Assert.Matches("^[0-9a-f]{12}$", hash);
+        Assert.Equal(32, token.Length);
+        Assert.Matches("^[0-9a-f]{32}$", token);
     }
 
     [Fact]
-    public void Store_returns_consistent_hash_for_same_page_and_user()
+    public void Store_returns_unique_tokens_for_same_page()
     {
         var cache = CreateCache();
         var page1 = CreatePage();
         var page2 = CreatePage();
 
-        var hash1 = cache.Store(page1, "user-1");
-        var hash2 = cache.Store(page2, "user-1");
+        var token1 = cache.Store(page1, "user-1");
+        var token2 = cache.Store(page2, "user-1");
 
-        Assert.Equal(hash1, hash2);
+        Assert.NotEqual(token1, token2);
     }
 
     [Fact]
-    public void Store_returns_different_hash_for_different_pages()
+    public void Store_returns_different_tokens_for_different_pages()
     {
         var cache = CreateCache();
         var page1 = CreatePage("Home");

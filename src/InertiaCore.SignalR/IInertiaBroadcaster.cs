@@ -1,27 +1,27 @@
 namespace InertiaCore.SignalR;
 
 /// <summary>
-/// Service for broadcasting prop refresh signals to connected Inertia clients.
+/// Service for broadcasting prop updates to connected Inertia clients via SignalR.
 /// </summary>
 public interface IInertiaBroadcaster
 {
     /// <summary>
-    /// Signals all clients viewing the specified component to reload the given props.
+    /// Signals clients to reload props via HTTP.
+    /// When <paramref name="only"/> is null, all props are refreshed.
+    /// When <paramref name="group"/> is null, targets all clients viewing the component.
     /// </summary>
-    Task RefreshProps(string component, string[] only);
+    Task RefreshProps(string component, string[]? only = null, string? group = null);
 
     /// <summary>
-    /// Signals a specific user to reload props on the specified component.
+    /// Pushes prop values directly to clients viewing a component via WebSocket.
+    /// When <paramref name="group"/> is null, targets all clients viewing the component.
     /// </summary>
-    Task RefreshPropsForUser(string userId, string component, string[] only);
+    Task PushProps(string component, object props, string? group = null);
 
     /// <summary>
-    /// Signals all clients viewing the specified component to reload all props.
+    /// Pushes prop values to all clients subscribed to a channel via WebSocket.
+    /// Works across pages — any prop with .WithLive(channel) receives the update
+    /// regardless of which component the client is viewing.
     /// </summary>
-    Task RefreshAll(string component);
-
-    /// <summary>
-    /// Signals a specific user to reload all props on the specified component.
-    /// </summary>
-    Task RefreshAllForUser(string userId, string component);
+    Task PushToChannel(string channel, object props);
 }

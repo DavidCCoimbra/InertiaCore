@@ -3,7 +3,7 @@ namespace InertiaCore.Ssr;
 /// <summary>
 /// Event raised when server-side rendering fails. Used for logging and diagnostic hooks.
 /// </summary>
-public class SsrRenderFailed
+public sealed class SsrRenderFailed
 {
     /// <summary>
     /// The type of error that occurred.

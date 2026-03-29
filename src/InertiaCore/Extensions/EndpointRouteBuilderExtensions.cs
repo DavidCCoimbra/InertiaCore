@@ -78,6 +78,8 @@ public static class EndpointRouteBuilderExtensions
     /// <summary>
     /// Maps the async page data endpoint that serves cached page props for hydration.
     /// Required when <c>SsrOptions.AsyncPageData</c> is enabled.
+    /// The endpoint is identity-scoped by default via <c>SsrOptions.ResolvePageDataIdentity</c>.
+    /// For authenticated apps, chain <c>.RequireAuthorization()</c> to enforce auth on this endpoint.
     /// </summary>
     public static IEndpointConventionBuilder MapInertiaPageData(
         this IEndpointRouteBuilder endpoints,

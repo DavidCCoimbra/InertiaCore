@@ -1,5 +1,6 @@
 using InertiaCore.EmbeddedV8;
 using InertiaCore.Extensions;
+using InertiaCore.SignalR;
 using InertiaCore.Ssr;
 using InertiaCore.Vite.Extensions;
 
@@ -44,23 +45,33 @@ builder.Services.AddInertiaSharedProps(ctx => new
     Year = DateTime.Now.Year,
 });
 
+// SignalR for live props
+builder.Services.AddInertiaSignalR();
+
 // Register EmbeddedV8 only when in V8 mode
 if (ssrMode == "v8")
 {
     builder.Services.AddInertiaEmbeddedV8(options =>
     {
         options.BundlePath = "dist/ssr/ssr.js";
-        options.PoolSize = 2; // Smaller pool for faster warmup during development
+        options.PoolSize = 2;
     });
 }
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseInertiaDeveloperExceptionPage();
+}
 
 app.UseStaticFiles();
 app.UseInertia();
 
 app.MapControllers();
 app.MapInertiaPageData();
+app.MapInertiaHub();
+app.MapInertiaSsrHealthCheck();
 if (ssrMode == "v8")
 {
     app.MapInertiaV8Reload();

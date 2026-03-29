@@ -49,7 +49,7 @@ public sealed partial class HttpSsrGateway : ISsrGateway
 
         try
         {
-            var response = await _httpClient.PostAsJsonAsync(url, page, s_jsonOptions, cancellationToken);
+            var response = await _httpClient.PostAsJsonAsync(url, page, s_jsonOptions, cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -57,7 +57,7 @@ public sealed partial class HttpSsrGateway : ISsrGateway
                     $"SSR render failed with status {response.StatusCode}", page: page);
             }
 
-            var data = await response.Content.ReadFromJsonAsync<SsrResponseData>(s_jsonOptions, cancellationToken);
+            var data = await response.Content.ReadFromJsonAsync<SsrResponseData>(s_jsonOptions, cancellationToken).ConfigureAwait(false);
             if (data == null)
             {
                 return HandleError(SsrErrorType.InvalidResponse,
@@ -101,10 +101,10 @@ public sealed partial class HttpSsrGateway : ISsrGateway
         try
         {
             var url = $"{_ssrOptions.Url.TrimEnd('/')}/health-check";
-            var response = await _httpClient.GetAsync(url, cancellationToken);
+            var response = await _httpClient.GetAsync(url, cancellationToken).ConfigureAwait(false);
             return response.IsSuccessStatusCode;
         }
-        catch
+        catch (Exception)
         {
             return false;
         }

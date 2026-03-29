@@ -34,7 +34,7 @@ public sealed partial class StreamingSsrMiddleware
         // Only intercept initial page loads — XHR Inertia requests get JSON, not HTML
         if (context.Request.Headers.ContainsKey(InertiaHeaders.Inertia))
         {
-            await _next(context);
+            await _next(context).ConfigureAwait(false);
             return;
         }
 
@@ -43,7 +43,7 @@ public sealed partial class StreamingSsrMiddleware
         using var buffer = new MemoryStream();
         context.Response.Body = buffer;
 
-        await _next(context);
+        await _next(context).ConfigureAwait(false);
 
         // Only stream HTML responses (Inertia initial page loads)
         var contentType = context.Response.ContentType ?? "";
@@ -51,12 +51,12 @@ public sealed partial class StreamingSsrMiddleware
         {
             buffer.Seek(0, SeekOrigin.Begin);
             context.Response.Body = originalBody;
-            await buffer.CopyToAsync(originalBody);
+            await buffer.CopyToAsync(originalBody).ConfigureAwait(false);
             return;
         }
 
         buffer.Seek(0, SeekOrigin.Begin);
-        var html = await new StreamReader(buffer).ReadToEndAsync();
+        var html = await new StreamReader(buffer).ReadToEndAsync().ConfigureAwait(false);
 
         // Extract page JSON from <script data-page>
         var pageJson = ExtractPageJson(html);
@@ -65,7 +65,7 @@ public sealed partial class StreamingSsrMiddleware
             // Not an Inertia page — send as-is
             context.Response.Body = originalBody;
             context.Response.ContentLength = Encoding.UTF8.GetByteCount(html);
-            await originalBody.WriteAsync(Encoding.UTF8.GetBytes(html));
+            await originalBody.WriteAsync(Encoding.UTF8.GetBytes(html)).ConfigureAwait(false);
             return;
         }
 
@@ -80,8 +80,8 @@ public sealed partial class StreamingSsrMiddleware
 
         // PHASE 1: Send the shell immediately (head, CSS, layout)
         LogPhaseFlush(_logger, 1, "shell");
-        await originalBody.WriteAsync(Encoding.UTF8.GetBytes(shell));
-        await originalBody.FlushAsync();
+        await originalBody.WriteAsync(Encoding.UTF8.GetBytes(shell)).ConfigureAwait(false);
+        await originalBody.FlushAsync().ConfigureAwait(false);
 
         // PHASE 2: SSR content (already rendered in the captured response)
         // The SSR body is between <div id="app"> and the page script
@@ -89,14 +89,14 @@ public sealed partial class StreamingSsrMiddleware
         if (ssrContent is not null)
         {
             LogPhaseFlush(_logger, 2, "ssr-content");
-            await originalBody.WriteAsync(Encoding.UTF8.GetBytes(ssrContent));
-            await originalBody.FlushAsync();
+            await originalBody.WriteAsync(Encoding.UTF8.GetBytes(ssrContent)).ConfigureAwait(false);
+            await originalBody.FlushAsync().ConfigureAwait(false);
         }
 
         // PHASE 3: Hydration data + closing HTML
         LogPhaseFlush(_logger, 3, "hydration");
-        await originalBody.WriteAsync(Encoding.UTF8.GetBytes(remainder));
-        await originalBody.FlushAsync();
+        await originalBody.WriteAsync(Encoding.UTF8.GetBytes(remainder)).ConfigureAwait(false);
+        await originalBody.FlushAsync().ConfigureAwait(false);
     }
 
     private static string? ExtractPageJson(string html)

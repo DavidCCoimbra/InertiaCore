@@ -43,7 +43,7 @@ public sealed partial class V8EnginePool : IDisposable
     /// </summary>
     public async Task<V8ScriptEngine> LeaseAsync(CancellationToken ct = default)
     {
-        return await _current.Channel.Reader.ReadAsync(ct);
+        return await _current.Channel.Reader.ReadAsync(ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -56,7 +56,7 @@ public sealed partial class V8EnginePool : IDisposable
         // If the engine belongs to a stale pool (after hot-swap), dispose it instead
         if (current.Contains(engine))
         {
-            await current.Channel.Writer.WriteAsync(engine);
+            await current.Channel.Writer.WriteAsync(engine).ConfigureAwait(false);
         }
         else
         {
@@ -70,17 +70,17 @@ public sealed partial class V8EnginePool : IDisposable
     /// </summary>
     public async Task TriggerReloadAsync()
     {
-        if (!await _reloadLock.WaitAsync(0)) return;
+        if (!await _reloadLock.WaitAsync(0).ConfigureAwait(false)) return;
 
         try
         {
             LogBundleChanged(_logger, _poolSize);
             var sw = Stopwatch.StartNew();
 
-            var bundleSource = await ReadBundleWithRetryAsync();
+            var bundleSource = await ReadBundleWithRetryAsync().ConfigureAwait(false);
             if (bundleSource == null) return;
 
-            var newSet = await WarmFromSourceAsync(bundleSource);
+            var newSet = await WarmFromSourceAsync(bundleSource).ConfigureAwait(false);
             if (newSet == null) return;
 
             var oldSet = Interlocked.Exchange(ref _current, newSet);
@@ -109,11 +109,18 @@ public sealed partial class V8EnginePool : IDisposable
 
     private async Task InitializeAsync()
     {
-        var engineSet = await WarmPoolAsync();
-        if (engineSet == null) return;
+        try
+        {
+            var engineSet = await WarmPoolAsync().ConfigureAwait(false);
+            if (engineSet == null) return;
 
-        _current = engineSet;
-        _isReady = true;
+            _current = engineSet;
+            _isReady = true;
+        }
+        catch (Exception ex)
+        {
+            LogWarmFailed(_logger, ex);
+        }
     }
 
     private async Task<EngineSet?> WarmPoolAsync()
@@ -124,8 +131,8 @@ public sealed partial class V8EnginePool : IDisposable
             return null;
         }
 
-        var bundleSource = await File.ReadAllTextAsync(_bundlePath);
-        return await WarmFromSourceAsync(bundleSource);
+        var bundleSource = await File.ReadAllTextAsync(_bundlePath).ConfigureAwait(false);
+        return await WarmFromSourceAsync(bundleSource).ConfigureAwait(false);
     }
 
     private async Task<EngineSet?> WarmFromSourceAsync(string bundleSource)
@@ -139,7 +146,7 @@ public sealed partial class V8EnginePool : IDisposable
             {
                 var engine = CreateEngine(bundleSource);
                 engines.Add(engine);
-                await channel.Writer.WriteAsync(engine);
+                await channel.Writer.WriteAsync(engine).ConfigureAwait(false);
                 LogEngineWarmed(_logger, i + 1, _poolSize);
             }
 
@@ -159,12 +166,12 @@ public sealed partial class V8EnginePool : IDisposable
         {
             try
             {
-                return await File.ReadAllTextAsync(_bundlePath);
+                return await File.ReadAllTextAsync(_bundlePath).ConfigureAwait(false);
             }
             catch (IOException)
             {
                 // File still being written — wait and retry
-                await Task.Delay(delayMs * (i + 1));
+                await Task.Delay(delayMs * (i + 1)).ConfigureAwait(false);
             }
         }
 
@@ -174,8 +181,16 @@ public sealed partial class V8EnginePool : IDisposable
 
     private static async Task DisposeAfterDelay(EngineSet set, TimeSpan delay)
     {
-        await Task.Delay(delay);
-        set.Dispose();
+        await Task.Delay(delay).ConfigureAwait(false);
+        try
+        {
+            set.Dispose();
+        }
+        catch
+        {
+            // V8 engine disposal can throw if the engine is in a bad state.
+            // Swallow to prevent unobserved task exceptions.
+        }
     }
 
     private static V8ScriptEngine CreateEngine(string bundleSource)

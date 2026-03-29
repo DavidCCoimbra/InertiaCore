@@ -14,7 +14,7 @@ namespace InertiaCore;
 /// </summary>
 public static class Inertia
 {
-    private static IHttpContextAccessor? s_httpContextAccessor;
+    private static volatile IHttpContextAccessor? s_httpContextAccessor;
 
     /// <summary>
     /// Initializes the static helper. Called by AddInertiaStaticHelper().
@@ -240,6 +240,42 @@ public static class Inertia
     /// <inheritdoc cref="InertiaResponseFactory.Scroll{T}(T, string, IProvidesScrollMetadata)"/>
     public static ScrollProp<T> Scroll<T>(Func<T?> callback, string wrapper = "data", IProvidesScrollMetadata? metadataProvider = null) =>
         InertiaResponseFactory.Scroll(callback, wrapper, metadataProvider);
+
+    // Live
+
+    /// <inheritdoc cref="InertiaResponseFactory.Live(string, object?)"/>
+    public static AlwaysProp<object?> Live(string channel, object? value) =>
+        InertiaResponseFactory.Live(channel, value);
+
+    /// <inheritdoc cref="InertiaResponseFactory.Live(string, object?)"/>
+    public static AlwaysProp<object?> Live(string channel, Func<object?> callback) =>
+        InertiaResponseFactory.Live(channel, callback);
+
+    /// <inheritdoc cref="InertiaResponseFactory.Live(string, object?)"/>
+    public static AlwaysProp<T> Live<T>(string channel, T? value) =>
+        InertiaResponseFactory.Live(channel, value);
+
+    /// <inheritdoc cref="InertiaResponseFactory.Live(string, object?)"/>
+    public static AlwaysProp<T> Live<T>(string channel, Func<T?> callback) =>
+        InertiaResponseFactory.Live(channel, callback);
+
+    // Timed
+
+    /// <inheritdoc cref="InertiaResponseFactory.Timed(object?, int)"/>
+    public static AlwaysProp<object?> Timed(object? value, int intervalSeconds) =>
+        InertiaResponseFactory.Timed(value, intervalSeconds);
+
+    /// <inheritdoc cref="InertiaResponseFactory.Timed(object?, int)"/>
+    public static AlwaysProp<object?> Timed(Func<object?> callback, int intervalSeconds) =>
+        InertiaResponseFactory.Timed(callback, intervalSeconds);
+
+    /// <inheritdoc cref="InertiaResponseFactory.Timed(object?, int)"/>
+    public static AlwaysProp<T> Timed<T>(T? value, int intervalSeconds) =>
+        InertiaResponseFactory.Timed(value, intervalSeconds);
+
+    /// <inheritdoc cref="InertiaResponseFactory.Timed(object?, int)"/>
+    public static AlwaysProp<T> Timed<T>(Func<T?> callback, int intervalSeconds) =>
+        InertiaResponseFactory.Timed(callback, intervalSeconds);
 
     // -- Private helpers --
 
